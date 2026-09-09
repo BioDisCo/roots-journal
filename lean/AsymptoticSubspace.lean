@@ -1,0 +1,43 @@
+-- Public entrypoint: paper-facing definitions, lemmas, and theorems.
+import AsymptoticSubspace.DefComputationalModel
+import AsymptoticSubspace.DefMinimumBroadcastWeight
+import AsymptoticSubspace.DefThickness
+
+import AsymptoticSubspace.LemHalfspaceDistFormula
+import AsymptoticSubspace.LemHalfspaceZone
+import AsymptoticSubspace.LemConcaveLine
+import AsymptoticSubspace.LemConcaveLineZero
+import AsymptoticSubspace.LemVolumes
+
+import AsymptoticSubspace.LemXiXip
+import AsymptoticSubspace.LemDifferences
+import AsymptoticSubspace.LemAccumulationPoint
+import AsymptoticSubspace.LemContinuity
+import AsymptoticSubspace.LemDeltaContraction
+import AsymptoticSubspace.LemContract
+import AsymptoticSubspace.LemConvexZeroHyperplane
+
+import AsymptoticSubspace.ThmSolving
+import AsymptoticSubspace.ThmImposs
+
+import AsymptoticSubspace.ThmPoss
+import AsymptoticSubspace.GraphProducts
+import AsymptoticSubspace.BlockExecution
+import AsymptoticSubspace.ThmRooted
+import AsymptoticSubspace.EqualNeighbor
+import AsymptoticSubspace.CorBound
+import AsymptoticSubspace.CorCharacterization
+import AsymptoticSubspace.SymmetricBody
+import AsymptoticSubspace.Symmetrization
+import AsymptoticSubspace.ExternalGraphBound
+import AsymptoticSubspace.StatefulAlgorithms
+import AsymptoticSubspace.ExactDimension
+import AsymptoticSubspace.SymmetrizationCoordinates
+import AsymptoticSubspace.VariableRelaying
+import AsymptoticSubspace.ActualRounds
+import AsymptoticSubspace.ActualRoundLemmas
+import AsymptoticSubspace.PaperComputationalModel
+import AsymptoticSubspace.ExactHyperplane
+import AsymptoticSubspace.PhysicalRelaying
+import AsymptoticSubspace.PhysicalAveraging
+import AsymptoticSubspace.PhysicalRelayRates
