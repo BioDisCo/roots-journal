@@ -231,6 +231,10 @@ The proof is based on an observation shown in Figures~\ref{fig:panel_1}e at the 
 Tracking the dynamics of the affine subspace spanned by the outputs of two processes that are in the broadcasting set, one observes convergence of this subspace and attraction of the other process outputs to this space.
 Again, we show that this holds in the general case.
 
+Finally, in Section~\ref{sec:simplex}, we strengthen the dimension bound by showing
+  that, under $\alpha$-safe averaging in $k$-rooted oblivious message adversaries,
+  the limit convex hull has at most $k$ vertices.
+
 We conclude in Section~\ref{sec:conclusion}.
 
 All named mathematical results have machine-checked counterparts in the Lean~4 proof assistant~\cite{lean4} using the Mathlib library, including the symmetrization construction and the cited graph-product bound.
@@ -1360,7 +1364,7 @@ This result follows via the reduction from $k$-rooted to
   $k$-broadcastable message adversaries in
   Theorem~\ref{thm:rooted:to:broadcastable} from the following theorem.
 
-\begin{theorem}
+\begin{theorem}\label{thm:limiting-vertices}
 Let $d \geq k \geq 1$.
 Every averaging algorithm with minimum broadcasting
   weight $\alpha > 0$ executed in a $k$-broadcastable
@@ -1512,6 +1516,42 @@ The theorem's statement follows from
   $|X_{M^\infty}^*| \leq |M^\infty| \leq k$.
 \end{proof}
 
+Theorem~\ref{thm:limiting-vertices} finally yields the following result for
+  $k$-rooted oblivious message adversaries via the reduction in
+  Theorem~\ref{thm:rooted:to:broadcastable}.
+
+\begin{corollary}\label{cor:rooted-vertices}
+Let $d \geq k \geq 1$.
+Every $\alpha$-safe averaging algorithm with $\alpha > 0$ executed in a
+  $k$-rooted oblivious message adversary has a limit polyhedron
+\[
+	P^* = \bigcap_{t\geq 0}P(t)
+\]
+with at most $k$ vertices.
+\end{corollary}
+\begin{proof}
+Let
+\[
+	L = \left\lceil
+	      \frac{\pi^2+6}{6}n+1
+		\right\rceil.
+\]
+By Theorem~\ref{thm:rooted:to:broadcastable}, every product of $L$ consecutive
+  communication graphs is $k$-broadcastable.
+Grouping the averaging rounds into blocks of length $L$ gives an averaging
+  execution on these product graphs.
+The block-wise execution has minimum broadcasting weight $\alpha^L > 0$.
+
+Applying Theorem~\ref{thm:limiting-vertices}, we have that
+  $\bigcap_{r \geq 0} P(rL)$ is a polyhedron with at most $k$ vertices.
+For every $t \geq 0$, there is a round $rL \geq t$ that is the end of a block,
+  and hence $P(rL) \subseteq P(t)$.
+Thus
+\[
+	\bigcap_{r \geq 0}P(rL) = \bigcap_{t \geq 0}P(t) = P^* \enspace,
+\]
+which proves the claim.
+\end{proof}
 
 
 \section{Conclusion}\label{sec:conclusion}
@@ -1526,6 +1566,11 @@ We then extend this analysis to a complete characterization of when a contractio
 Moreover, simple averaging algorithms are shown to be solution to this problem.
 This shows that averaging algorithms degrade gracefully in (periods of) non-1-rooted message adversaries and that averaging algorithms are
 also effective if convergence to a single point is not necessary.
+
+We finally strengthen this dimension bound by showing that, under $\alpha$-safe
+  averaging in $k$-rooted oblivious message adversaries, the limit convex hull is
+  a polyhedron with at most $k$ vertices, even though individual process outputs
+  need not converge.
 
 The work also raises several follow-up questions.
 An open problem is the quantification of the speed to dimensions $s < d$.
