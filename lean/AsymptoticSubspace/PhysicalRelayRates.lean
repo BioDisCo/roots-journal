@@ -4,9 +4,11 @@ import AsymptoticSubspace.PhysicalAveraging
 # Graph products and relayed averaging
 
 `graphProduct_broadcastable_paper` is Theorem 1 for every product length above
-the stated bound. `physical_averaging_linear_convergence` gives the relayed
-agreement, validity, and geometric estimate of Corollary 12. Its ordinary
-averaging clause is `theorem_rooted_exact_actualRounds` in `ActualRounds`.
+the stated bound. `relayed_averaging_linear_convergence` gives the relayed
+agreement, validity, and geometric estimate of Corollary 12 for arbitrary
+executions. `physical_averaging_linear_convergence` instantiates it for the
+local-rule implementation. `ordinary_averaging_linear_convergence` gives
+the ordinary-averaging clause by applying the volume theorem to blocks.
 -/
 
 noncomputable section
@@ -62,6 +64,80 @@ theorem sharpRootedBroadcastBound_actualRounds (k : ℕ) (hk : 1 ≤ k)
     sharpRootedBroadcastBound n k hk (normalizeRoundZero G)
       (normalizeRoundZero_all (f := G) (P := fun H => IsKRooted H k) hroot) start
 
+/-- Corollary 12, ordinary averaging. Group `L` rounds, apply the volume
+convergence theorem with weight `α^L`, and transfer convergence to every round. -/
+theorem ordinary_averaging_linear_convergence
+    (hd : 1 ≤ Module.finrank ℝ V) (E : AveragingExecution (V := V) n)
+    (α : ℝ) (hα : 0 < α) (hsafe : AlphaSafeActualRounds E α)
+    (hroot : ∀ t, 0 < t → IsKRooted (E.graphs t) (Module.finrank ℝ V)) :
+    ∃ W : AffineSubspace ℝ V,
+      Module.finrank ℝ W.direction = Module.finrank ℝ V - 1 ∧
+      (∀ i, ConvergesToSet (fun t => E.outputs t i) (W : Set V)) ∧
+      (∀ i, ConvergesToSet (fun t => E.outputs t i) (ModelLemmas.Poly E 0)) := by
+  classical
+  let L := linearBroadcastRounds n
+  let B := blockExecution E.normalizeRoundZero L
+  have hblocks : ∀ t, IsKBroadcastable (B.graphs t) (Module.finrank ℝ V) := fun t =>
+    sharpRootedBroadcastBound n _ hd E.normalizeRoundZero.graphs
+      (normalizeRoundZero_all (f := E.graphs) (P := fun G => IsKRooted G _) hroot)
+      ((t - 1) * L)
+  choose M hcard hM using hblocks
+  have hmbw : MinimumBroadcastWeight B M (α ^ L) :=
+    alphaSafe_implies_minimumBroadcastWeight B M _
+      (blockExecution_safe E.normalizeRoundZero hα.le (alphaSafe_normalizeRoundZero E hsafe) L) hM
+  obtain ⟨⟨W, hdim, hconv, _⟩, _⟩ := theorem_poss hd B M (α ^ L) (pow_pos hα L) hmbw hcard
+  obtain ⟨F, hWF, hF⟩ := exists_affine_superspace_finrank W (hconv 0).1 hdim (Nat.sub_le _ _)
+  refine ⟨F, hF, ?_, ModelLemmas.averaging_validityAtLimit E⟩
+  exact convergesToSet_of_blocks E (linearBroadcastRounds_pos n) F.convex
+    (fun i => convergesToSet_mono (hconv i) hWF)
+
+/-- Normalize the unused weight slot of a relayed execution. Both graph slots
+zero and one represent the first physical block, so its graph sequence is unchanged. -/
+def RelayingExecution.normalizeRoundZero {G : Round → CommGraph n} {L : ℕ}
+    (R : RelayingExecution (V := V) G L) : RelayingExecution (V := V) G L where
+  averaging := R.averaging.normalizeRoundZero
+  graphs_eq t := by
+    cases t with
+    | zero =>
+      change R.averaging.graphs 1 = _
+      simpa using R.graphs_eq 1
+    | succ t => exact R.graphs_eq (t + 1)
+
+/-- Corollary 12 for arbitrary relayed executions. Weights may depend on the
+entire execution history; safety is imposed only at actual block-end updates. -/
+theorem relayed_averaging_linear_convergence
+    (G : Round → CommGraph n) (hd : 1 ≤ Module.finrank ℝ V)
+    (hroot : ∀ t, 0 < t → IsKRooted (G t) (Module.finrank ℝ V))
+    (R : RelayingExecution (V := V) G (linearBroadcastRounds n))
+    (α : ℝ) (hα : 0 < α) (hsafe : AlphaSafeActualRounds R.averaging α) :
+    (∃ W : AffineSubspace ℝ V,
+      Module.finrank ℝ W.direction = Module.finrank ℝ V - 1 ∧
+      (∀ i, ConvergesToSet (fun t => R.outputs t i) (W : Set V)) ∧
+      (∀ i, ConvergesToSet (fun t => R.outputs t i) (R.poly 0))) ∧
+    (∀ t, volume.real (R.poly t) ≤
+      (1 - α ^ Module.finrank ℝ V) ^ (t / linearBroadcastRounds n) *
+        volume.real (R.poly 0)) := by
+  have hs := alphaSafe_normalizeRoundZero R.averaging hsafe
+  have hblocks := sharpRootedBroadcastBound_actualRounds _ hd G hroot
+  obtain ⟨⟨W, hdim, hconv, hvalid⟩, _⟩ := corollary_bound hd G _
+    (linearBroadcastRounds_pos n) hblocks R.normalizeRoundZero α hα hs
+  obtain ⟨F, hWF, hF⟩ := exists_affine_superspace_finrank W (hconv 0).1 hdim (Nat.sub_le _ _)
+  refine ⟨⟨F, hF, fun i => convergesToSet_mono (hconv i) hWF, hvalid⟩, ?_⟩
+  exact relayed_volume_geometric_bound G _ hblocks R.normalizeRoundZero α hα hs
+
+/-- The rounded deadline following Corollary 12, for arbitrary relayed executions. -/
+theorem relayed_averaging_linear_deadline
+    (G : Round → CommGraph n) (hd : 1 ≤ Module.finrank ℝ V)
+    (hroot : ∀ t, 0 < t → IsKRooted (G t) (Module.finrank ℝ V))
+    (R : RelayingExecution (V := V) G (linearBroadcastRounds n))
+    (α : ℝ) (hα : 0 < α) (hsafe : AlphaSafeActualRounds R.averaging α)
+    (ε : ℝ) (hε : 0 < ε) (t : ℕ)
+    (ht : ⌈(α ^ Module.finrank ℝ V)⁻¹ * Real.log (volume.real (R.poly 0) / ε)⌉₊ *
+      linearBroadcastRounds n ≤ t) : volume (R.poly t) ≤ ENNReal.ofReal ε :=
+  (corollary_bound hd G _ (linearBroadcastRounds_pos n)
+    (sharpRootedBroadcastBound_actualRounds _ hd G hroot) R.normalizeRoundZero α hα
+    (alphaSafe_normalizeRoundZero R.averaging hsafe)).2 ε hε t ht
+
 /-- Geometric rate for actual physical outputs. Safety is required only on the
 constructed macro execution, so no safety on unreachable buffers is assumed. -/
 theorem physical_averaging_linear_geometric (R : LocalAveragingRule V n)
@@ -105,14 +181,11 @@ theorem physical_averaging_linear_convergence (R : LocalAveragingRule V n)
     (∀ t, volume.real (convexHull ℝ (Set.range (A.run G init t))) ≤
       (1 - α ^ Module.finrank ℝ V) ^ (t / linearBroadcastRounds n) *
         volume.real (convexHull ℝ (Set.range init))) := by
-  refine ⟨?_, physical_averaging_linear_geometric R G init hd hroot α hα hsafe⟩
-  have hs : R.SafeExecution
-      (fixedRelayingSchedule (linearBroadcastRounds n) (linearBroadcastRounds_pos n))
-      G init α := (R.safeExecution_iff_macroExecution_safeActualRounds _ G init α).mpr hsafe
-  obtain ⟨W, hdim, hconv, hvalid⟩ := physical_averaging_converges_of_safeExecution R _ G init
-    (Module.finrank ℝ V) hd le_rfl hroot α hα hs
-  obtain ⟨F, hWF, hF⟩ := exists_affine_superspace_finrank W (hconv 0).1 hdim (Nat.sub_le _ _)
-  exact ⟨F, hF, fun i => convergesToSet_mono (hconv i) hWF, hvalid⟩
+  simpa only [LocalAveragingRule.physical_run_fixed, LocalAveragingRule.physical_outputs_fixed,
+    RelayingExecution.poly, RelayingExecution.outputs, Nat.zero_div,
+    LocalAveragingRule.fixedExecution, LocalAveragingRule.macroExecution,
+    LocalAveragingRule.macroOutputs] using relayed_averaging_linear_convergence G hd hroot
+      (R.fixedExecution G _ (linearBroadcastRounds_pos n) init) α hα hsafe
 
 /-- Rounded physical-round deadline, including the final-round update. -/
 theorem physical_averaging_linear_deadline (R : LocalAveragingRule V n)

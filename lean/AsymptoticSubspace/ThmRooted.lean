@@ -1,4 +1,5 @@
 import AsymptoticSubspace.BlockExecution
+import AsymptoticSubspace.LinearGraphBound
 import AsymptoticSubspace.ThmSolving
 
 noncomputable section
@@ -57,7 +58,7 @@ theorem theorem_solving_of_broadcastable_blocks
   exact convergesToSet_of_blocks E hL W.convex hconv
 
 /-- The rooted-adversary sufficiency result, for ordinary averaging at every round.
-It uses the paper's elementary polynomial graph reduction. -/
+It uses the linear graph-product bound of Theorem 1. -/
 theorem theorem_rooted
     (k : ℕ) (hk : 1 ≤ k) (hkd : k ≤ Module.finrank ℝ V)
     (E : AveragingExecution (V := V) n) (α : ℝ) (hα : 0 < α) (hsafe : AlphaSafe E α)
@@ -66,15 +67,8 @@ theorem theorem_rooted
       Module.finrank ℝ W.direction ≤ k - 1 ∧
       (∀ i, ConvergesToSet (fun t => E.outputs t i) (W : Set V)) ∧
       (∀ i, ConvergesToSet (fun t => E.outputs t i) (Poly E 0)) := by
-  classical
-  by_cases hkn : k ≤ n
-  · exact theorem_solving_of_broadcastable_blocks k hk hkd E α hα hsafe
-      (n ^ (k + 1)) (pow_pos (Nat.pos_of_ne_zero (NeZero.ne n)) _)
-      (fun start => graphProduct_broadcastable_polynomial E.graphs start k hk hkn hroot)
-  · apply theorem_solving_of_broadcastable_blocks k hk hkd E α hα hsafe 1 (by decide)
-    intro start
-    refine ⟨Finset.univ, by simpa using (le_of_not_ge hkn), ?_⟩
-    intro i
-    exact ⟨i, Finset.mem_univ i, (graphProduct E.graphs start 1).self_loop i⟩
+  exact theorem_solving_of_broadcastable_blocks k hk hkd E α hα hsafe
+    (linearBroadcastRounds n) (linearBroadcastRounds_pos n)
+    (sharpRootedBroadcastBound n k hk E.graphs hroot)
 
 end AsymptoticSubspace

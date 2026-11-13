@@ -7,30 +7,6 @@ namespace AsymptoticSubspace
 
 open ComputationalModel MeasureTheory
 
-/-- Integer block length corresponding to the cited ITCS 2023 Theorem 32. -/
-def linearBroadcastRounds (n : ℕ) : ℕ :=
-  ⌈((Real.pi ^ 2 + 6) / 6) * (n : ℝ) + 1⌉₊
-
-lemma linearBroadcastRounds_pos (n : ℕ) : 0 < linearBroadcastRounds n := by
-  apply Nat.ceil_pos.mpr
-  positivity
-
-/-- The exact cited graph theorem, proved by `sharpRootedBroadcastBound` below. -/
-def SharpRootedBroadcastBound (n : ℕ) : Prop :=
-  ∀ (k : ℕ), 1 ≤ k → ∀ G : Round → CommGraph n,
-    (∀ t, IsKRooted (G t) k) → ∀ start,
-      IsKBroadcastable (graphProduct G start (linearBroadcastRounds n)) k
-
-/-- The cited ITCS 2023 Theorem 32, with every graph and counting dependency
-discharged in Lean. The integer ceiling is explicit. -/
-theorem sharpRootedBroadcastBound (n : ℕ) : SharpRootedBroadcastBound n := by
-  intro k _ G hroot start
-  apply graphProduct_broadcastable_linear G start _ k hroot
-  have hceil := Nat.le_ceil (((Real.pi ^ 2 + 6) / 6) * (n : ℝ) + 1)
-  change ((Real.pi ^ 2 + 6) / 6) * (n : ℝ) <
-    (⌈((Real.pi ^ 2 + 6) / 6) * (n : ℝ) + 1⌉₊ : ℝ) + 1
-  linarith
-
 /-- Compatibility interface accepting an explicit proof of the graph bound.
 Use `corollary_bound_linear` for the unconditional paper-facing result. -/
 theorem corollary_bound_linear_of_external

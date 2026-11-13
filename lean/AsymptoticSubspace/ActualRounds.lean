@@ -16,8 +16,8 @@ paper's convention.
 
 `theorem_solving_exact_actualRounds` is Theorem 13, with an affine agreement
 space of exactly dimension `k - 1`. `theorem_rooted_exact_actualRounds` gives
-the ordinary-averaging clause of Corollary 12 and the safe-averaging clause of
-Corollary 20.
+the safe-averaging clause of Corollary 20. Corollary 12 is assembled via the
+volume theorem in `PhysicalRelayRates`.
 -/
 
 noncomputable section
