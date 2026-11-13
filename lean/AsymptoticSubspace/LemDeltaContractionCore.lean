@@ -1,6 +1,6 @@
 -- Internal plumbing module.
 -- Reader-facing statement is in `LemDeltaContraction.lean`.
-import AsymptoticSubspace.ModelBridgeCore
+import AsymptoticSubspace.AveragingHulls
 
 noncomputable section
 
@@ -409,44 +409,6 @@ lemma roundProjection_kills_parallel
     simpa [Submodule.orthogonal_orthogonal] using hmem_diff
   change ((diffSubmodule E M t)ᗮ.starProjection) (x - y) = 0
   exact (Submodule.starProjection_apply_eq_zero_iff ((diffSubmodule E M t)ᗮ)).2 hmem_orth
-
-omit [FiniteDimensional ℝ V] [DecidableEq V] in
-lemma output_succ_mem_poly
-    (E : AveragingExecution (V := V) n)
-    (t : Round) (i : Proc n) :
-    E.outputs (t + 1) i ∈ Poly E t := by
-  let f : Proc n → ℝ := fun j => E.weights (t + 1) i j
-  let z : Proc n → V := fun j => E.outputs t j
-  let ξ : V := Finset.univ.centerMass f z
-  have hξ_mem : ξ ∈ Poly E t := by
-    have hw0 : ∀ j ∈ (Finset.univ : Finset (Proc n)), 0 ≤ f j := by
-      intro j _hj
-      exact E.weight_nonneg (t + 1) i j
-    have hsum_pos : 0 < Finset.sum (Finset.univ : Finset (Proc n)) (fun j => f j) := by
-      have hsum_one : Finset.sum (Finset.univ : Finset (Proc n)) (fun j => f j) = 1 := by
-        simpa [f] using E.weights_sum_one (t + 1) i
-      linarith
-    have hz : ∀ j ∈ (Finset.univ : Finset (Proc n)), z j ∈ Values E t := by
-      intro j _hj
-      exact ⟨j, rfl⟩
-    have hcm :
-        ξ ∈ convexHull ℝ (Values E t) := by
-      simpa [ξ, f, z, ModelLemmas.Values] using
-        (Finset.centerMass_mem_convexHull
-          (R := ℝ) (E := V) (t := (Finset.univ : Finset (Proc n)))
-          (w := f) hw0 hsum_pos (z := z) hz)
-    simpa [ModelLemmas.Poly] using hcm
-  have hξ_eq : ξ = E.outputs (t + 1) i := by
-    calc
-      ξ = (Finset.sum (Finset.univ : Finset (Proc n)) (fun j => f j))⁻¹ •
-            Finset.sum (Finset.univ : Finset (Proc n)) (fun j => f j • z j) := rfl
-      _ = (1 : ℝ)⁻¹ •
-            Finset.sum (Finset.univ : Finset (Proc n)) (fun j => f j • z j) := by
-            simp [f, E.weights_sum_one (t + 1) i]
-      _ = Finset.sum (Finset.univ : Finset (Proc n)) (fun j => f j • z j) := by simp
-      _ = E.outputs (t + 1) i := by
-            simpa [f, z] using (E.output_succ_eq_weighted_sum t i).symm
-  simpa [hξ_eq] using hξ_mem
 
 omit [FiniteDimensional ℝ V] in
 lemma diffSet_poly_norm_bound

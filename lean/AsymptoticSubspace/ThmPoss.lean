@@ -1,7 +1,8 @@
 -- TeX label: thm:poss
 import AsymptoticSubspace.LemContract
 import AsymptoticSubspace.VolumeRateCore
-import AsymptoticSubspace.ThmSolving
+import AsymptoticSubspace.NestedHulls
+import AsymptoticSubspace.ExactHyperplane
 
 noncomputable section
 
@@ -97,7 +98,21 @@ theorem theorem_poss
       (α ^ Module.finrank ℝ V)⁻¹ * Real.log (volume.real (Poly E 0) / ε) ≤ (t : ℝ) →
       volume (Poly E t) ≤ ENNReal.ofReal ε) := by
   refine ⟨?_, fun ε hε t ht => volume_round_bound E M α hα hmbw hcard hε t ht⟩
-  exact ThmSolving.theorem_solving (Module.finrank ℝ V) (Module.finrank ℝ V)
-    le_rfl hd E M α hα hmbw hcard rfl
+  -- The nested limit hull is convex and has zero volume.
+  let Pstar := ⋂ t, Poly E t
+  have hfinite : volume Pstar ≠ ⊤ := measure_ne_top_of_subset
+    (Set.iInter_subset (fun t => Poly E t) 0) (poly_compact E 0).measure_ne_top
+  have hzero : volume Pstar = 0 := by
+    have hreal : volume.real Pstar ≤ 0 :=
+      ge_of_tendsto (volume_tendsto_zero E M α hα hmbw hcard)
+        (Filter.Eventually.of_forall fun t => measureReal_mono
+          (Set.iInter_subset (fun t => Poly E t) t) (poly_compact E t).measure_ne_top)
+    exact ((ENNReal.toReal_eq_zero_iff _).mp
+      (le_antisymm hreal ENNReal.toReal_nonneg)).resolve_right hfinite
+  have hconvex : Convex ℝ Pstar := convex_iInter fun t => convex_convexHull ℝ _
+  -- Lemma 11 places the limit in a hyperplane; compact nestedness gives agreement.
+  obtain ⟨W, _, hdim, hPW⟩ := (lemma_convex_zero_hyperplane_exact hd hconvex).mpr hzero
+  refine ⟨W, by omega, ?_, ModelLemmas.averaging_validityAtLimit E⟩
+  exact fun i => convergesToSet_mono (outputs_converge_poly_limit E i) hPW
 
 end AsymptoticSubspace

@@ -5,6 +5,19 @@ import AsymptoticSubspace.LemHalfspaceZone
 import AsymptoticSubspace.LemContract
 import AsymptoticSubspace.LemDeltaContraction
 
+/-!
+# Averaging results on positive communication rounds
+
+The statements in this module are Lemmas 5, 10, 14, 15, 19 and Theorem 6.
+The index `t` denotes the pre-update round: the corresponding update in the
+paper is round `t + 1`. `Poly E t`, `PolyOn E t S`, and `vectorSpan ℝ (ValuesOn E t S)`
+represent `P(t)`, `P_S(t)`, and `dir(X_S(t))`, respectively.
+
+Theorem 6 uses volume contraction, compactness of the nested hulls, and
+Lemma 11 to place their intersection in a hyperplane. Lemma 10 uses the
+symmetrization and concave-radius estimates of Section 5.2.
+-/
+
 noncomputable section
 
 namespace AsymptoticSubspace
@@ -104,10 +117,20 @@ theorem theorem_poss_exact_actualRounds
       (∀ i, ConvergesToSet (fun t => E.outputs t i) (W : Set V)) ∧
       (∀ i, ConvergesToSet (fun t => E.outputs t i) (Poly E 0))) ∧
     (∀ (ε : ℝ), 0 < ε → ∀ t : ℕ,
-      (α ^ Module.finrank ℝ V)⁻¹ * Real.log (volume.real (Poly E 0) / ε) ≤ (t : ℝ) →
+      (volume.real (Poly E 0) ≤ ε ∨
+        (α ^ Module.finrank ℝ V)⁻¹ * Real.log (volume.real (Poly E 0) / ε) ≤ (t : ℝ)) →
       volume (Poly E t) ≤ ENNReal.ofReal ε) := by
   obtain ⟨⟨W, hdim, hconv, hvalid⟩, hrate⟩ := theorem_poss_actualRounds hd E M α hα hmbw hcard
   obtain ⟨F, hWF, hF⟩ := exists_affine_superspace_finrank W (hconv 0).1 hdim (Nat.sub_le _ _)
-  exact ⟨⟨F, hF, fun i => convergesToSet_mono (hconv i) hWF, hvalid⟩, hrate⟩
+  refine ⟨⟨F, hF, fun i => convergesToSet_mono (hconv i) hWF, hvalid⟩, ?_⟩
+  intro ε hε t ht
+  rcases ht with hsmall | ht
+  · have hfinite : volume (Poly E 0) ≠ ⊤ :=
+      (Set.finite_range (E.outputs 0)).isCompact_convexHull.measure_ne_top
+    have hle : volume (Poly E 0) ≤ ENNReal.ofReal ε := by
+      apply (ENNReal.toReal_le_toReal hfinite ENNReal.ofReal_ne_top).mp
+      simpa [measureReal_def, ENNReal.toReal_ofReal hε.le] using hsmall
+    exact (measure_mono (ModelLemmas.poly_antitone E (Nat.zero_le t))).trans hle
+  · exact hrate ε hε t ht
 
 end AsymptoticSubspace

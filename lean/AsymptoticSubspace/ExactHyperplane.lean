@@ -1,5 +1,7 @@
 import AsymptoticSubspace.LemConvexZeroHyperplane
-import AsymptoticSubspace.ExactDimension
+import AsymptoticSubspace.AffineDimension
+
+/-! Lemma 11: zero volume and containment in an affine hyperplane. -/
 
 noncomputable section
 

@@ -1,5 +1,14 @@
 import AsymptoticSubspace.LemVolumes
 
+/-!
+# Volumes of rotationally symmetric bodies
+
+Lemma 9 is `lemma_volumes_geometric_paper`: both integral identities and both
+inequalities are stated together. Sections have dimension `m`, so the ambient
+dimension in the paper is `d = m + 1`. Integrability follows from the profile
+hypotheses via `concave_profile_intervalIntegrable`.
+-/
+
 noncomputable section
 
 namespace AsymptoticSubspace.PaperFormalization
@@ -149,5 +158,48 @@ theorem lemma_volumes_geometric {m : ℕ} (hm : 0 < m)
     volume_symmetricBodyOn_eq_integral hm hmeas hbh
       (fun x hx => hnonneg x ⟨hb0.trans hx.1, hx.2⟩) hright]
   exact ⟨ENNReal.ofReal_le_ofReal hb.1, ENNReal.ofReal_le_ofReal hb.2⟩
+
+/-- Lemma 9: integral representations and upper/lower bounds for the two
+restricted symmetric bodies, with ambient dimension `d = m + 1 ≥ 2`. -/
+theorem lemma_volumes_geometric_paper {m : ℕ} (hm : 0 < m)
+    {h α : ℝ} (hh : 0 < h) (hα0 : 0 < α) (hα1 : α < 1)
+    {r : ℝ → ℝ} (hmeas : Measurable r)
+    (hconc : ConcaveOn ℝ (Icc 0 h) r)
+    (hnonneg : ∀ x ∈ Icc 0 h, 0 ≤ r x) :
+    let C := C_dMinusOne (m + 1)
+    let r0 := r ((1 - α) * h)
+    let left := symmetricBodyOn m r 0 ((1 - α) * h)
+    let right := symmetricBodyOn m r ((1 - α) * h) h
+    (volume left < ⊤ ∧
+      volume.real left = ∫ x in 0..((1 - α) * h), C * r x ^ m ∧
+      volume.real left ≤ C * r0 ^ m * h / (α ^ m * ((m + 1 : ℕ) : ℝ)) *
+        (1 - α ^ (m + 1))) ∧
+    (volume right < ⊤ ∧
+      volume.real right = ∫ x in ((1 - α) * h)..h, C * r x ^ m ∧
+      C * r0 ^ m * h / (α ^ m * ((m + 1 : ℕ) : ℝ)) * α ^ (m + 1) ≤
+        volume.real right) := by
+  have hb0 : 0 ≤ (1 - α) * h := mul_nonneg (by linarith) hh.le
+  have hbh : (1 - α) * h ≤ h := by nlinarith
+  have hInt := concave_profile_intervalIntegrable hh.le hmeas hconc hnonneg m
+  have hleft : IntervalIntegrable (fun x => r x ^ m) volume 0 ((1 - α) * h) := by
+    apply hInt.mono_set
+    rw [uIcc_of_le hb0, uIcc_of_le hh.le]
+    exact Icc_subset_Icc le_rfl hbh
+  have hright : IntervalIntegrable (fun x => r x ^ m) volume ((1 - α) * h) h := by
+    apply hInt.mono_set
+    rw [uIcc_of_le hbh, uIcc_of_le hh.le]
+    exact Icc_subset_Icc hb0 le_rfl
+  obtain ⟨hlfin, hleq⟩ := volume_real_symmetricBodyOn hm hmeas hb0
+    (fun x hx => hnonneg x ⟨hx.1, hx.2.trans hbh⟩) hleft
+  obtain ⟨hrfin, hreq⟩ := volume_real_symmetricBodyOn hm hmeas hbh
+    (fun x hx => hnonneg x ⟨hb0.trans hx.1, hx.2⟩) hright
+  have hbounds := AsymptoticSubspace.lemma_volumes_of_concave (d := m + 1) (by omega)
+    hh hα0 hα1 hmeas hconc hnonneg
+  dsimp at hbounds ⊢
+  refine ⟨⟨hlfin, hleq, ?_⟩, ⟨hrfin, hreq, ?_⟩⟩
+  · rw [hleq]
+    simpa using hbounds.1
+  · rw [hreq]
+    simpa using hbounds.2
 
 end AsymptoticSubspace.PaperFormalization

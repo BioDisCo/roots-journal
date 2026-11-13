@@ -34,8 +34,8 @@ theorem convergesToSet_of_blocks
     convexHull_min hvalues (hW.thickening ε)
   apply (Metric.mem_thickening_iff_infDist_lt hWne).mp
   apply hpoly
-  exact ThmSolving.poly_antitone E (Nat.div_mul_le_self t L)
-    (ThmSolving.output_mem_poly_self E t i)
+  exact ModelLemmas.poly_antitone E (Nat.div_mul_le_self t L)
+    (ModelLemmas.output_mem_poly_self E t i)
 
 /-- An execution-level reduction for any proven finite broadcasting-block bound. -/
 theorem theorem_solving_of_broadcastable_blocks
@@ -53,7 +53,7 @@ theorem theorem_solving_of_broadcastable_blocks
     alphaSafe_implies_minimumBroadcastWeight _ M _ (blockExecution_safe E hα.le hsafe L) hbroadcast
   obtain ⟨W, hdim, hconv, _⟩ := ThmSolving.theorem_solving (Module.finrank ℝ V) k hkd hk
     (blockExecution E L) M (α ^ L) (pow_pos hα _) hmbw hcard rfl
-  refine ⟨W, hdim, ?_, ThmSolving.averaging_validityAtLimit E⟩
+  refine ⟨W, hdim, ?_, ModelLemmas.averaging_validityAtLimit E⟩
   exact convergesToSet_of_blocks E hL W.convex hconv
 
 /-- The rooted-adversary sufficiency result, for ordinary averaging at every round.

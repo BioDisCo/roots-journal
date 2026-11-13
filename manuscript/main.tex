@@ -160,6 +160,7 @@
 
 	We give a complete characterization of the solvability of asymptotic subspace consensus in oblivious message adversaries.
 	In particular, we show that a large class of algorithms used for asymptotic consensus gracefully degrades to asymptotic subspace consensus in distributed systems with weaker assumptions on the communication network.
+	The limiting convex hull moreover has a simple shape: whenever contraction to dimension $s$ is achievable, it has at most $s+1$ vertices.
 	We also present bounds on the rate by which a lower-than-initial dimension is reached.
 \end{abstract}
 
@@ -1364,7 +1365,7 @@ This result follows via the reduction from $k$-rooted to
   $k$-broadcastable message adversaries in
   Theorem~\ref{thm:rooted:to:broadcastable} from the following theorem.
 
-\begin{theorem}\label{thm:limiting-vertices}
+\begin{theorem}[\leanproof{\leanurl{ThmLimitingVertices.lean}}]\label{thm:limiting-vertices}
 Let $d \geq k \geq 1$.
 Every averaging algorithm with minimum broadcasting
   weight $\alpha > 0$ executed in a $k$-broadcastable
@@ -1520,7 +1521,7 @@ Theorem~\ref{thm:limiting-vertices} finally yields the following result for
   $k$-rooted oblivious message adversaries via the reduction in
   Theorem~\ref{thm:rooted:to:broadcastable}.
 
-\begin{corollary}\label{cor:rooted-vertices}
+\begin{corollary}[\leanproof{\leanurl{CorRootedVertices.lean}}]\label{cor:rooted-vertices}
 Let $d \geq k \geq 1$.
 Every $\alpha$-safe averaging algorithm with $\alpha > 0$ executed in a
   $k$-rooted oblivious message adversary has a limit polyhedron

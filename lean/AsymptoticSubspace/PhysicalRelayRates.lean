@@ -1,5 +1,14 @@
 import AsymptoticSubspace.PhysicalAveraging
 
+/-!
+# Graph products and relayed averaging
+
+`graphProduct_broadcastable_paper` is Theorem 1 for every product length above
+the stated bound. `physical_averaging_linear_convergence` gives the relayed
+agreement, validity, and geometric estimate of Corollary 12. Its ordinary
+averaging clause is `theorem_rooted_exact_actualRounds` in `ActualRounds`.
+-/
+
 noncomputable section
 
 namespace AsymptoticSubspace
@@ -9,6 +18,15 @@ open ComputationalModel MeasureTheory
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   [FiniteDimensional ℝ V] [MeasurableSpace V] [BorelSpace V]
   {n : ℕ} [NeZero n]
+
+/-- Theorem 1: any sufficiently long product of k-rooted graphs is
+k-broadcastable, with the paper's real-valued lower bound on its length. -/
+theorem graphProduct_broadcastable_paper {n : ℕ}
+    (G : Round → CommGraph n) (start T k : ℕ)
+    (hroot : ∀ t, 0 < t → IsKRooted (G t) k)
+    (hT : ((Real.pi ^ 2 + 6) / 6) * (n : ℝ) + 1 ≤ (T : ℝ)) :
+    IsKBroadcastable (graphProduct G start T) k := by
+  exact graphProduct_broadcastable_linear_actualRounds G start T k hroot (by linarith)
 
 /-- The physical local averaging protocol, connected to the fixed-block
 execution used in the rate theorem. No graph-product realization is assumed. -/
@@ -67,6 +85,34 @@ theorem physical_averaging_linear_geometric (R : LocalAveragingRule V n)
   simpa only [LocalAveragingRule.physical_run_fixed, RelayingExecution.poly,
     RelayingExecution.outputs, LocalAveragingRule.fixedExecution,
     LocalAveragingRule.macroExecution, Nat.zero_div, LocalAveragingRule.macroOutputs] using h
+
+/-- Corollary 12, relayed averaging: agreement in an affine subspace of exactly
+dimension `d - 1`, validity, and the volume estimate at every physical round. -/
+theorem physical_averaging_linear_convergence (R : LocalAveragingRule V n)
+    (G : Round → CommGraph n) (init : Proc n → V)
+    (hd : 1 ≤ Module.finrank ℝ V)
+    (hroot : ∀ t, 0 < t → IsKRooted (G t) (Module.finrank ℝ V))
+    (α : ℝ) (hα : 0 < α)
+    (hsafe : AlphaSafeActualRounds
+      (R.macroExecution (fixedRelayingSchedule (linearBroadcastRounds n)
+        (linearBroadcastRounds_pos n)) G init) α) :
+    let A := R.physicalAlgorithm (fixedRelayingSchedule (linearBroadcastRounds n)
+      (linearBroadcastRounds_pos n))
+    (∃ W : AffineSubspace ℝ V,
+      Module.finrank ℝ W.direction = Module.finrank ℝ V - 1 ∧
+      (∀ i, ConvergesToSet (fun t => A.run G init t i) (W : Set V)) ∧
+      (∀ i, ConvergesToSet (fun t => A.run G init t i) (convexHull ℝ (Set.range init)))) ∧
+    (∀ t, volume.real (convexHull ℝ (Set.range (A.run G init t))) ≤
+      (1 - α ^ Module.finrank ℝ V) ^ (t / linearBroadcastRounds n) *
+        volume.real (convexHull ℝ (Set.range init))) := by
+  refine ⟨?_, physical_averaging_linear_geometric R G init hd hroot α hα hsafe⟩
+  have hs : R.SafeExecution
+      (fixedRelayingSchedule (linearBroadcastRounds n) (linearBroadcastRounds_pos n))
+      G init α := (R.safeExecution_iff_macroExecution_safeActualRounds _ G init α).mpr hsafe
+  obtain ⟨W, hdim, hconv, hvalid⟩ := physical_averaging_converges_of_safeExecution R _ G init
+    (Module.finrank ℝ V) hd le_rfl hroot α hα hs
+  obtain ⟨F, hWF, hF⟩ := exists_affine_superspace_finrank W (hconv 0).1 hdim (Nat.sub_le _ _)
+  exact ⟨F, hF, fun i => convergesToSet_mono (hconv i) hWF, hvalid⟩
 
 /-- Rounded physical-round deadline, including the final-round update. -/
 theorem physical_averaging_linear_deadline (R : LocalAveragingRule V n)

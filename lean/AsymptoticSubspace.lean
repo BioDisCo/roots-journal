@@ -41,3 +41,5 @@ import AsymptoticSubspace.ExactHyperplane
 import AsymptoticSubspace.PhysicalRelaying
 import AsymptoticSubspace.PhysicalAveraging
 import AsymptoticSubspace.PhysicalRelayRates
+import AsymptoticSubspace.ThmLimitingVertices
+import AsymptoticSubspace.CorRootedVertices

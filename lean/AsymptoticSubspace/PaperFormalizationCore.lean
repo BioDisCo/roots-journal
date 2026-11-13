@@ -40,7 +40,7 @@ lemma zeroLine_sub_secant (hbc : b < c) (rb rc ξ : ℝ) :
   field_simp [hcb]
   ring_nf
 
-/-- Algebraic core used in the proof of Lemma 6 (`lem:concave:line:zero`), left side. -/
+/-- Algebraic core used in the proof of Lemma 8 (the zero-endpoint secant bound), left side. -/
 lemma secant_le_zeroLine_of_nonneg
     {b c rb rc ξ : ℝ} (hbc : b < c) (hrc : 0 ≤ rc) (hξ : ξ ≤ b) :
     secantLine b c rb rc ξ ≤ zeroLine b c rb ξ := by
@@ -53,7 +53,7 @@ lemma secant_le_zeroLine_of_nonneg
     simpa [zeroLine_sub_secant hbc rb rc ξ] using hmul
   linarith
 
-/-- Algebraic core used in the proof of Lemma 6 (`lem:concave:line:zero`), right side. -/
+/-- Algebraic core used in the proof of Lemma 8 (the zero-endpoint secant bound), right side. -/
 lemma zeroLine_le_secant_of_nonneg
     {b c rb rc ξ : ℝ} (hbc : b < c) (hrc : 0 ≤ rc) (hξ : b ≤ ξ) :
     zeroLine b c rb ξ ≤ secantLine b c rb rc ξ := by
@@ -195,7 +195,7 @@ lemma rewrite_coeff_right_nonneg {α w : ℝ} (hα : α < 1) (hw : w ≤ 1) :
   have hden : 0 ≤ 1 - α := sub_nonneg.mpr (le_of_lt hα)
   exact div_nonneg hnum hden
 
-/-- Algebraic rewriting used in Lemma 8 (`lem:xi_xip`). -/
+/-- Algebraic rewriting used in Lemma 14 (broadcasting/residual decomposition). -/
 lemma weighted_rewrite
     {α w : ℝ} (hα : α ≠ 1) (ξ η : V) :
     w • ξ + (1 - w) • η =
@@ -224,7 +224,7 @@ lemma weighted_rewrite
           ((((w - α) / (1 - α)) • ξ) + (((1 - w) / (1 - α)) • η)) := by
       rw [smul_add, add_assoc]
 
-/-- Difference decomposition used in Lemma 9 (`lem:differences`). -/
+/-- Difference decomposition used in Lemma 15 (difference decomposition). -/
 lemma difference_decomposition
     (α : ℝ) (x₁ x₂ y₁ y₂ : V) :
     (α • x₁ + (1 - α) • x₂) - (α • y₁ + (1 - α) • y₂)
@@ -240,7 +240,7 @@ variable {V : Type*} [AddCommGroup V] [Module ℝ V]
 /-- The set of all differences `x - y` with `x,y ∈ S`. -/
 def diffSet (S : Set V) : Set V := {u | ∃ x ∈ S, ∃ y ∈ S, u = x - y}
 
-/-- Complete formalization of the decomposition step in Lemma 8 (`lem:xi_xip`). -/
+/-- Lemma 14: decomposition into broadcasting and residual components. -/
 theorem lemma_xi_xip_complete
     {P : Set V} (hPconv : Convex ℝ P) {α w : ℝ}
     (hα_lt_one : α < 1)
@@ -267,7 +267,7 @@ theorem lemma_xi_xip_complete
     _ = α • ξ + (1 - α) • ξ' := by
       simp [ξ', β, γ]
 
-/-- Complete formalization of Lemma 9 (`lem:differences`) once two decompositions are given. -/
+/-- Lemma 15: the difference of two decomposed process values. -/
 theorem lemma_differences_complete
     {S P : Set V} {α : ℝ}
     {xᵢ xⱼ ξᵢ ξⱼ ηᵢ ηⱼ : V}
@@ -440,20 +440,23 @@ theorem lemma_convex_zero_hyperplane
       MeasureTheory.Measure.addHaar_affineSubspace MeasureTheory.volume E hEne
     exact MeasureTheory.measure_mono_null hCE hEzero
   · intro hCzero
-    have hIntEmpty : interior C = ∅ := by
-      by_contra hIntNonempty
-      have hIntNe : (interior C).Nonempty := Set.nonempty_iff_ne_empty.mpr hIntNonempty
-      have hIntPos : 0 < MeasureTheory.volume (interior C) :=
-        IsOpen.measure_pos MeasureTheory.volume isOpen_interior hIntNe
-      have hCpos : 0 < MeasureTheory.volume C :=
-        lt_of_lt_of_le hIntPos (MeasureTheory.measure_mono interior_subset)
-      rw [hCzero] at hCpos
-      exact lt_irrefl 0 hCpos
     have hSpanNeTop : affineSpan ℝ C ≠ ⊤ := by
       intro hSpanTop
-      have hIntNe : (interior C).Nonempty :=
-        (hCconv.interior_nonempty_iff_affineSpan_eq_top).2 hSpanTop
-      exact Set.nonempty_iff_ne_empty.mp hIntNe hIntEmpty
+      -- A full affine basis in C generates a nondegenerate simplex contained in C.
+      obtain ⟨s, hsC, b, hb⟩ := AffineBasis.exists_affine_subbasis hSpanTop
+      have hsSpan : affineSpan ℝ s = ⊤ := by
+        simpa [hb] using b.tot
+      have hSimplexSpan : affineSpan ℝ (convexHull ℝ s) = ⊤ := by
+        rw [affineSpan_convexHull, hsSpan]
+      have hSimplexInterior : (interior (convexHull ℝ s)).Nonempty :=
+        (convex_convexHull ℝ s).interior_nonempty_iff_affineSpan_eq_top.mpr hSimplexSpan
+      have hSimplexPos : 0 < MeasureTheory.volume (convexHull ℝ s) :=
+        (IsOpen.measure_pos MeasureTheory.volume isOpen_interior hSimplexInterior).trans_le
+          (MeasureTheory.measure_mono interior_subset)
+      have hCpos := hSimplexPos.trans_le
+        (MeasureTheory.measure_mono (convexHull_min hsC hCconv))
+      rw [hCzero] at hCpos
+      exact lt_irrefl 0 hCpos
     exact ⟨affineSpan ℝ C, hSpanNeTop, subset_affineSpan ℝ C⟩
 
 end ConvexZeroHyperplane
@@ -499,11 +502,11 @@ end AccumulationPoint
 
 section Volumes
 
-/-- Left-truncated profile used in Lemma 7 (`lem:volumes`). -/
+/-- Left-truncated profile used in Lemma 9 (symmetric-body volume bounds). -/
 def rLeft (r : ℝ → ℝ) (h α : ℝ) : ℝ → ℝ :=
   fun ξ => if ξ ∈ Set.Icc 0 ((1 - α) * h) then r ξ else 0
 
-/-- Right-truncated profile used in Lemma 7 (`lem:volumes`). -/
+/-- Right-truncated profile used in Lemma 9 (symmetric-body volume bounds). -/
 def rRight (r : ℝ → ℝ) (h α : ℝ) : ℝ → ℝ :=
   fun ξ => if ξ ∈ Set.Icc ((1 - α) * h) h then r ξ else 0
 
@@ -513,10 +516,10 @@ def C_dMinusOne (d : ℕ) : ℝ :=
     Real.Gamma ((((d - 1 : ℕ) : ℝ) / 2) + 1)
 
 /--
-Formalization target for paper Lemma 7 (`lem:volumes`).
+Formalization target for paper Lemma 9 (symmetric-body volume bounds).
 
 This statement records the two integral bounds proved from the linear majorant/minorant
-constructed in Lemma 6 (`lem:concave:line:zero`).
+constructed in Lemma 8 (the zero-endpoint secant bound).
 -/
 theorem lemma_volumes
     {d : ℕ} (hd : 1 ≤ d)

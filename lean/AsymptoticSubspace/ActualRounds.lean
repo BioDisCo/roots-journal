@@ -6,6 +6,20 @@ round zero has outputs but no communication or averaging weights. These bridges
 remove the internal predicates' unused round-zero obligations: copying round one
 into that slot changes neither a graph product nor any process trajectory. -/
 
+/-!
+# Positive-round hypotheses
+
+An execution has initial outputs at time zero and performs updates at positive
+rounds. Normalizing its unused graph and weight slot at zero leaves all outputs
+unchanged. This module transfers the internal all-round interfaces to the
+paper's convention.
+
+`theorem_solving_exact_actualRounds` is Theorem 13, with an affine agreement
+space of exactly dimension `k - 1`. `theorem_rooted_exact_actualRounds` gives
+the ordinary-averaging clause of Corollary 12 and the safe-averaging clause of
+Corollary 20.
+-/
+
 noncomputable section
 
 namespace AsymptoticSubspace.ComputationalModel

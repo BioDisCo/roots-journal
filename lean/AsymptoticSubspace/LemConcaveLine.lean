@@ -4,6 +4,8 @@
 
 import AsymptoticSubspace.PaperFormalizationCore
 
+/-! Lemma 7: secant bounds for a concave function. -/
+
 noncomputable section
 
 namespace AsymptoticSubspace

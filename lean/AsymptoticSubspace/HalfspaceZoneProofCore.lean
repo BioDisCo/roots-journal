@@ -82,51 +82,42 @@ theorem lemma_halfspace_zone
         α * setDistTo (PolyOn E t (M (t + 1))) H
           ≤ Metric.infDist (E.outputs (t + 1) i) H := by
     intro i
-    rcases lemma_xi_xip_model (E := E) (M := M) (α := α) (t := t) (i := i) hα_pos hmbw with
-      ⟨ξ, hξ, ξ', hξ', hout⟩
+    let w : ℝ := ∑ j ∈ M (t + 1), E.weights (t + 1) i j
+    let ξ := (M (t + 1)).centerMass (E.weights (t + 1) i) (E.outputs t)
+    have hαw : α ≤ w := hmbw.2 (t + 1) i
+    have hw : 0 < w := hα_pos.trans_le hαw
+    have hξ : ξ ∈ PolyOn E t (M (t + 1)) := by
+      exact Finset.centerMass_mem_convexHull (t := M (t + 1))
+        (fun j _ => E.weight_nonneg (t + 1) i j) hw
+        (fun j hj => ⟨j, hj, rfl⟩)
     have hξ_nonneg : 0 ≤ inner ℝ (ξ - q) v := hPolyOn_sub_K hξ
-    have hξ'_nonneg : 0 ≤ inner ℝ (ξ' - q) v := hPoly_sub_K hξ'
-    have hαw : α ≤ BroadcastWeight E M t i := hmbw.2 (t + 1) i
-    have hw_le_one : BroadcastWeight E M t i ≤ 1 := by
-      have hMsubset : M (t + 1) ⊆ Finset.univ := by
-        intro j hj
-        simp
+    have hwξ : w • ξ = ∑ j ∈ M (t + 1), E.weights (t + 1) i j • E.outputs t j := by
+      change w • (w⁻¹ • _) = _
+      rw [smul_smul, mul_inv_cancel₀ hw.ne', one_smul]
+    -- Expand the update, discard nonnegative terms outside M, and use its total weight.
+    have hsum : inner ℝ (E.outputs (t + 1) i - q) v =
+        ∑ j : Proc n, E.weights (t + 1) i j * inner ℝ (E.outputs t j - q) v := by
+      rw [E.output_succ_eq_weighted_sum, inner_sub_left, sum_inner]
+      simp_rw [real_inner_smul_left, inner_sub_left, mul_sub]
+      rw [Finset.sum_sub_distrib, ← Finset.sum_mul, E.weights_sum_one, one_mul]
+    have hsumM : w * inner ℝ (ξ - q) v =
+        ∑ j ∈ M (t + 1), E.weights (t + 1) i j * inner ℝ (E.outputs t j - q) v := by
+      simp_rw [inner_sub_left, mul_sub]
+      rw [← real_inner_smul_left, hwξ, sum_inner]
+      simp_rw [real_inner_smul_left]
+      rw [Finset.sum_sub_distrib, ← Finset.sum_mul]
+    have hinner_ge : α * inner ℝ (ξ - q) v ≤ inner ℝ (E.outputs (t + 1) i - q) v := by
       calc
-        BroadcastWeight E M t i
-            = Finset.sum (M (t + 1)) (fun j => E.weights (t + 1) i j) := by
-                simp [BroadcastWeight]
-        _ ≤ Finset.sum Finset.univ (fun j => E.weights (t + 1) i j) := by
-              exact Finset.sum_le_sum_of_subset_of_nonneg hMsubset
-                (fun j hjU hjM => E.weight_nonneg (t + 1) i j)
-        _ = 1 := by
-              simpa using E.weights_sum_one (t + 1) i
-    have hα_le_one : α ≤ 1 := le_trans hαw hw_le_one
-    have hone_minus_nonneg : 0 ≤ 1 - α := sub_nonneg.mpr hα_le_one
-    have hout_inner :
-        inner ℝ (E.outputs (t + 1) i - q) v
-          = α * inner ℝ (ξ - q) v + (1 - α) * inner ℝ (ξ' - q) v := by
-      have hξ_sub : inner ℝ (ξ - q) v = inner ℝ ξ v - inner ℝ q v := by
-        simp [inner_sub_left]
-      have hξ'_sub : inner ℝ (ξ' - q) v = inner ℝ ξ' v - inner ℝ q v := by
-        simp [inner_sub_left]
-      calc
-        inner ℝ (E.outputs (t + 1) i - q) v
-            = inner ℝ (α • ξ + (1 - α) • ξ') v - inner ℝ q v := by
-                simp [hout, inner_sub_left]
-        _ = α * inner ℝ ξ v + (1 - α) * inner ℝ ξ' v - inner ℝ q v := by
-              simp [inner_add_left, inner_smul_left]
-        _ = α * inner ℝ (ξ - q) v + (1 - α) * inner ℝ (ξ' - q) v := by
-              rw [hξ_sub, hξ'_sub]
-              ring
-    have hinner_ge :
-        α * inner ℝ (ξ - q) v ≤ inner ℝ (E.outputs (t + 1) i - q) v := by
-      calc
-        α * inner ℝ (ξ - q) v
-            ≤ α * inner ℝ (ξ - q) v + (1 - α) * inner ℝ (ξ' - q) v := by
-              have : 0 ≤ (1 - α) * inner ℝ (ξ' - q) v :=
-                mul_nonneg hone_minus_nonneg hξ'_nonneg
-              linarith
-        _ = inner ℝ (E.outputs (t + 1) i - q) v := hout_inner.symm
+        α * inner ℝ (ξ - q) v ≤ w * inner ℝ (ξ - q) v :=
+          mul_le_mul_of_nonneg_right hαw hξ_nonneg
+        _ = ∑ j ∈ M (t + 1), E.weights (t + 1) i j *
+            inner ℝ (E.outputs t j - q) v := hsumM
+        _ ≤ ∑ j : Proc n, E.weights (t + 1) i j *
+            inner ℝ (E.outputs t j - q) v := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
+          intro j _ _
+          exact mul_nonneg (E.weight_nonneg (t + 1) i j) (hValues_sub_K ⟨j, rfl⟩)
+        _ = inner ℝ (E.outputs (t + 1) i - q) v := hsum.symm
     have hξ_notin : ξ ∉ H := by
       intro hξH
       have : inner ℝ (ξ - q) v < 0 := by simpa [H] using hξH

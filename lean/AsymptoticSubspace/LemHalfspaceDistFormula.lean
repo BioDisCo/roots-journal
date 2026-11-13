@@ -3,6 +3,8 @@
 
 import AsymptoticSubspace.PaperFormalizationCore
 
+/-! Lemma 4: distance to an open half-space. -/
+
 noncomputable section
 
 namespace AsymptoticSubspace

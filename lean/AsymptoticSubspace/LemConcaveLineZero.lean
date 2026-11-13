@@ -4,6 +4,8 @@
 
 import AsymptoticSubspace.PaperFormalizationCore
 
+/-! Lemma 8: secant bounds with a zero endpoint. -/
+
 noncomputable section
 
 namespace AsymptoticSubspace

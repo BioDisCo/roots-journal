@@ -125,6 +125,20 @@ theorem macroExecution_safeActualRounds_of_safeExecution
     (R.macroOutputs B G init k) i j = some (R.macroOutputs B G init k j)
   simp only [floodBuffer, if_pos h]
 
+/-- Safety of the sampled execution is exactly safety on the received buffers
+of the relayed protocol. -/
+theorem safeExecution_iff_macroExecution_safeActualRounds
+    (R : LocalAveragingRule V n) (B : RelayingSchedule)
+    (G : Round → CommGraph n) (init : Proc n → V) (α : ℝ) :
+    R.SafeExecution B G init α ↔ AlphaSafeActualRounds (R.macroExecution B G init) α := by
+  refine ⟨R.macroExecution_safeActualRounds_of_safeExecution B G init, ?_⟩
+  intro hsafe k i j v hv
+  have hedge : ((R.macroExecution B G init).graphs (k + 1)).edge j i := by
+    change (graphProduct G (B.boundary k) (B.boundary (k + 1) - B.boundary k)).edge j i
+    by_contra h
+    simp [macroBuffer, floodBuffer, h] at hv
+  exact hsafe (k + 1) (Nat.succ_pos _) i j hedge
+
 /-- The macro execution's slot zero duplicates slot one, so an internal
 all-round safety predicate introduces no additional assumption here. -/
 theorem macroExecution_safe_of_actualRounds

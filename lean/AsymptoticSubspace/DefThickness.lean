@@ -1,9 +1,29 @@
 -- TeX label: def:thickness
 -- Definitions of pairDiameter and thicknessOn (projection-based thickness).
 
-import AsymptoticSubspace.ModelBridgeCore
+import AsymptoticSubspace.LemDeltaContractionCore
+
+/-!
+# Definition 16: round projections and thickness
+
+`roundProjection E M t` is the paper's `Π_{t+1}`: it projects orthogonally
+onto `dir(X_{M(t+1)}(t))ᗮ`. The equality below identifies its construction
+with this description. `thicknessOn` is `Δ_Π(X)`; `pairDiameter` supplies
+the Lipschitz constant in Lemma 18.
+-/
 
 namespace AsymptoticSubspace
+
+/-- The round projection is the orthogonal projection onto the complement of
+the direction space of the broadcasting values before the update. -/
+theorem roundProjection_eq_orthogonal_vectorSpan
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+    [FiniteDimensional ℝ V] {n : ℕ}
+    (E : ComputationalModel.AveragingExecution (V := V) n)
+    (M : ComputationalModel.Round → Finset (ComputationalModel.Proc n)) (t : ℕ) :
+    roundProjection E M t =
+      (vectorSpan ℝ (ModelLemmas.ValuesOn E t (M (t + 1))))ᗮ.starProjection := by
+  simp only [roundProjection, diffSubmodule_eq_vectorSpan_valuesOn]
 
 def pairDiameter
     {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
