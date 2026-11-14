@@ -10,23 +10,6 @@ namespace AsymptoticSubspace.ComputationalModel
 
 variable {n : ℕ}
 
-/-- A communication graph whose edges represent one message-relaying block. -/
-def CommGraph.comp (G H : CommGraph n) : CommGraph n where
-  edge i j := ∃ m, G.edge i m ∧ H.edge m j
-  self_loop i := ⟨i, G.self_loop i, H.self_loop i⟩
-
-def CommGraph.id (n : ℕ) : CommGraph n where
-  edge i j := i = j
-  self_loop _ := rfl
-
-/-- The product of rounds `start + 1` through `start + len`, in temporal order. -/
-def graphProduct (G : Round → CommGraph n) (start : Round) : ℕ → CommGraph n
-  | 0 => CommGraph.id n
-  | len + 1 => (graphProduct G start len).comp (G (start + len + 1))
-
-def IsKBroadcastable (G : CommGraph n) (k : ℕ) : Prop :=
-  ∃ R : Finset (Proc n), R.card ≤ k ∧ IsBroadcastingSet G R
-
 def influence (G : CommGraph n) (R : Finset (Proc n)) : Finset (Proc n) := by
   classical
   exact Finset.univ.filter (fun i => ∃ j ∈ R, G.edge j i)

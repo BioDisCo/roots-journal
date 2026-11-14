@@ -15,7 +15,6 @@ import all AsymptoticSubspace.BrunnMinkowski.Weighted
 import all AsymptoticSubspace.ComputationalModelCore
 import all AsymptoticSubspace.ConcaveProfileIntegrability
 import all AsymptoticSubspace.CorBound
-import all AsymptoticSubspace.CorCharacterization
 import all AsymptoticSubspace.CorRootedVertices
 import all AsymptoticSubspace.DefComputationalModel
 import all AsymptoticSubspace.DefMinimumBroadcastWeight
@@ -44,6 +43,7 @@ import all AsymptoticSubspace.LemVolumes
 import all AsymptoticSubspace.LemXiXip
 import all AsymptoticSubspace.LimitingVerticesCore
 import all AsymptoticSubspace.LinearGraphBound
+import all AsymptoticSubspace.ModelDefinitions
 import all AsymptoticSubspace.ModelBridgeCore
 import all AsymptoticSubspace.NestedHulls
 import all AsymptoticSubspace.PaperComputationalModel
@@ -61,7 +61,6 @@ import all AsymptoticSubspace.Symmetrization
 import all AsymptoticSubspace.SymmetrizationCoordinates
 import all AsymptoticSubspace.TemporalAncestors
 import all AsymptoticSubspace.Thickness
-import all AsymptoticSubspace.ThmImposs
 import all AsymptoticSubspace.ThmLimitingVertices
 import all AsymptoticSubspace.ThmPoss
 import all AsymptoticSubspace.ThmRooted
@@ -74,6 +73,26 @@ import Lean.Util.CollectAxioms
 
 /-! Check the axioms of all project theorems and the main proof dependencies.
 Run with `lake env lean CheckAxioms.lean` after `lake build`. -/
+
+section ModelSpecification
+
+open AsymptoticSubspace.ComputationalModel
+
+variable {V State : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+  [FiniteDimensional ℝ V] {n : ℕ}
+
+-- Expand the public specification into the two requirements of Section 3.
+example (A : AsymptoticSubspace.PaperComputationalModel.Algorithm V n State)
+    (N : ObliviousMessageAdversary n) (s : ℕ) :
+    AsymptoticSubspace.PaperComputationalModel.Solves A N s ↔
+      ∀ (G : Round → CommGraph n) (init : Proc n → V),
+        (∀ t, 0 < t → G t ∈ N.graphs) →
+        ∃ E : AffineSubspace ℝ V, Module.finrank ℝ E.direction = s ∧
+          (∀ i, ConvergesToSet (fun t => A.run G init t i) (E : Set V)) ∧
+          (∀ i, ConvergesToSet (fun t => A.run G init t i)
+            (convexHull ℝ (Set.range init))) := Iff.rfl
+
+end ModelSpecification
 
 open Lean in
 /-- Follow project declarations through their types and proof bodies.
@@ -92,6 +111,18 @@ private partial def projectDependencies (env : Environment) (name : Name) :
 open Lean in
 run_cmd do
   let env ← getEnv
+  for name in #[``AsymptoticSubspace.ComputationalModel.CommGraph,
+      ``AsymptoticSubspace.ComputationalModel.IsKRooted,
+      ``AsymptoticSubspace.ComputationalModel.IsKBroadcastable,
+      ``AsymptoticSubspace.ComputationalModel.StatefulAlgorithm,
+      ``AsymptoticSubspace.ComputationalModel.AdmissibleActualTrace,
+      ``AsymptoticSubspace.StatefulSolvesExactActualRounds,
+      ``AsymptoticSubspace.PaperComputationalModel.Algorithm,
+      ``AsymptoticSubspace.PaperComputationalModel.Solves] do
+    let owner := (env.getModuleIdxFor? name).map fun i => env.header.moduleNames[i.toNat]!
+    unless owner == some `AsymptoticSubspace.DefComputationalModel do
+      throwError "The paper's model definition is not in DefComputationalModel: {name}"
+  logInfo "Checked the Section 2 model definitions and the exact specification of Section 3."
   let names ← env.constants.foldM (init := #[]) fun names name info => do
     pure <| match info with
       | .thmInfo _ =>
@@ -106,6 +137,9 @@ run_cmd do
       throwError "Unexpected axioms in {name}: {unexpected}"
   logInfo m!"Checked {names.size} project theorems: only propext, Classical.choice, and Quot.sound."
   let dependencies := fun name => (projectDependencies env name).run {} |>.2
+  unless (dependencies ``AsymptoticSubspace.PaperComputationalModel.impossibility).contains
+      ``AsymptoticSubspace.lemma_imposs_stateful do
+    throwError "Theorem 2 does not use the arbitrary-state impossibility proof"
   unless (dependencies ``AsymptoticSubspace.thickness_eq_max).contains
       ``AsymptoticSubspace.exists_thickness_eq_norm do
     throwError "Definition 16 does not establish attainment on compact sets"

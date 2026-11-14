@@ -2,7 +2,7 @@
 
 module
 
-public import AsymptoticSubspace.DefComputationalModel
+public import AsymptoticSubspace.ModelDefinitions
 
 @[expose] public section
 

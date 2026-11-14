@@ -58,10 +58,6 @@ variable {n : ℕ}
   | zero => rfl
   | succ L ih => simp only [graphProduct, ih, normalizeRoundZero_succ]
 
-/-- Only rounds with actual communication must belong to the adversary. -/
-def AdmissibleActualTrace (N : ObliviousMessageAdversary n) (G : Round → CommGraph n) : Prop :=
-  ∀ t, 0 < t → G t ∈ N.graphs
-
 lemma admissible_normalizeRoundZero {N : ObliviousMessageAdversary n}
     {G : Round → CommGraph n} (h : AdmissibleActualTrace N G) :
     AdmissibleTrace N (normalizeRoundZero G) :=
@@ -363,14 +359,6 @@ theorem graphProduct_broadcastable_linear_actualRounds
 section Exact
 
 variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
-
-/-- Exact-dimensional agreement with admissibility required only for `t ≥ 1`. -/
-def StatefulSolvesExactActualRounds {State : Type*} {n : ℕ}
-    (A : StatefulAlgorithm V n State) (N : ObliviousMessageAdversary n) (s : ℕ) : Prop :=
-  ∀ (G : Round → CommGraph n) (init : Proc n → V), AdmissibleActualTrace N G →
-    ∃ E : AffineSubspace ℝ V, Module.finrank ℝ E.direction = s ∧
-      (∀ i, ConvergesToSet (fun t => A.run G init t i) (E : Set V)) ∧
-      (∀ i, ConvergesToSet (fun t => A.run G init t i) (convexHull ℝ (Set.range init)))
 
 theorem statefulSolvesExactActualRounds_iff {State : Type*} {n : ℕ}
     (A : StatefulAlgorithm V n State) (N : ObliviousMessageAdversary n) (s : ℕ) :

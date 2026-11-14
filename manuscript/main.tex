@@ -295,7 +295,7 @@ These formalizations serve as supplementary information and are not meant as rep
 
 
 
-\section{Computational Model\leanformalized{\leanurl{PaperComputationalModel.lean}}}\label{sec:model}
+\section{Computational Model\leanformalized{\leanurl{DefComputationalModel.lean}}}\label{sec:model}
 
 We write $\IN = \{1,2,\dots\}$ and $\IN_0 = \IN \cup \{0\}$.
 Further, $[n] = \{1,\dots, n\}$.
@@ -429,7 +429,7 @@ We first show a lower bound on the attainable dimensionality reduction in asympt
 The proof is a generalization of the impossibility of asymptotic consensus in non-rooted oblivious message adversaries \cite{CBFN15:icalp}.
 It does not rely on the dynamics of the communication network and requires a single static communication graph only, where sufficiently many groups of processes receive no influence from outside their group and their outputs converge to their respective common initial values.
 
-\begin{theoremrep}[\leanproof{\leanurl{PaperComputationalModel.lean\#L54-L65}}]\label{lem:imposs}
+\begin{theoremrep}[\leanproof{\leanurl{PaperComputationalModel.lean\#L37-L48}}]\label{lem:imposs}
 	For $d > s \geq 0$, the $d$-to-$s$-dimensional asymptotic subspace consensus problem is unsolvable in oblivious message adversaries that are not $(s+1)$-rooted.
 \end{theoremrep}
 \begin{proof}
@@ -494,7 +494,7 @@ For example, the equal neighbor algorithm is $1/n$-safe.
 We next define a property for averaging algorithms executed in $k$-broadcastable oblivious message adversaries for some $k \geq 1$.
 The property will be central in quantifying the influence a broadcasting set has on the other processes.
 
-\begin{definition}[Minimum broadcasting weight\leanformalized{\leanurl{ActualRounds.lean\#L150-L153}}]
+\begin{definition}[Minimum broadcasting weight\leanformalized{\leanurl{ActualRounds.lean\#L146-L149}}]
 	Let round $t \geq 1$, graph $G_t$ be $k$-broadcastable for some $k \geq 1$, and $M(t)$ be the broadcasting set in $G_t$.
 	For an averaging algorithm, an update step $x_i(t) = \sum_{j \in [n]} w_{ij}(t) x_j(t-1)$ has minimum broadcasting weight $\alpha$ if $\sum_{j \in M(t)} w_{ij}(t) \geq \alpha$.
 	An averaging algorithm has minimum broadcasting weight $\alpha$ if all update steps do.
@@ -1090,7 +1090,7 @@ Thus, for $0<\varepsilon<\vol(P(0))$, we have $\vol(P(t))\leq\varepsilon$ whenev
 Theorem~\ref{thm:poss} showed a contraction to lower dimensionality than the initial dimensionality~$d$.
 In this section we show that the dimensionality reduction indeed matches the lower bound in Section~\ref{sec:problem}:
 
-\begin{theorem}[\leanproof{\leanurl{ActualRounds.lean\#L322-L334}}]\label{thm:solving}
+\begin{theorem}[\leanproof{\leanurl{ActualRounds.lean\#L318-L330}}]\label{thm:solving}
 	Let $d \geq k \geq 1$.
 	Every averaging algorithm with minimum broadcasting weight $\alpha > 0$ solves $d$-to-$(k-1)$-dimensional asymptotic subspace consensus in a $k$-broadcastable oblivious message adversary.
 \end{theorem}
@@ -1380,7 +1380,7 @@ The thickness furthermore depends continuously on the projection.
 
 From Theorem~\ref{thm:solving}, the reduction of message adversaries in Theorem~\ref{thm:rooted:to:broadcastable}, and the lower bound in Theorem~\ref{lem:imposs}, one finally obtains a complete characterization in oblivious message adversaries:
 
-\begin{corollary}[Characterization of Asymptotic Subspace Consensus\leanproof{\leanurl{PaperComputationalModel.lean\#L44-L82}}]
+\begin{corollary}[Characterization of Asymptotic Subspace Consensus\leanproof{\leanurl{PaperComputationalModel.lean\#L27-L65}}]
 	Let $0\leq s<d$.
 	The $d$-to-$s$-dimensional asymptotic subspace consensus problem is solvable in an oblivious message adversary $\N$ if and only if $\N$ is $(s+1)$-rooted.
 	In that case, every $\alpha$-safe averaging algorithm with $\alpha>0$ solves the problem.

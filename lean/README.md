@@ -17,6 +17,13 @@ main dependencies of the volume, projection, and limiting-vertex proofs.
 
 ## Notation and scope
 
+[DefComputationalModel.lean](AsymptoticSubspace/DefComputationalModel.lean)
+contains the definitions for Sections 2 and 3: communication graphs, root and
+broadcasting sets, oblivious message adversaries, arbitrary-state local algorithms,
+their executions, and the exact-dimensional consensus specification.
+[PaperComputationalModel.lean](AsymptoticSubspace/PaperComputationalModel.lean)
+states Theorem 2 and Corollary 20 using that model.
+
 The ambient space `V` is any finite-dimensional real inner product space;
 `Module.finrank ℝ V` is the paper's dimension `d`. In particular, take
 `V = EuclideanSpace ℝ (Fin d)` for the paper's Euclidean space. Processes are
@@ -59,9 +66,10 @@ Numbers refer to the manuscript. Declaration names are in the
 
 | Paper | Lean declaration | File |
 | --- | --- | --- |
+| Sections 2–3: model and specification | `ComputationalModel.StatefulAlgorithm`, `PaperComputationalModel.Algorithm`, `PaperComputationalModel.Solves` | [DefComputationalModel](AsymptoticSubspace/DefComputationalModel.lean) |
 | Theorem 1: rooted graph products | `graphProduct_broadcastable_paper` | [PhysicalRelayRates](AsymptoticSubspace/PhysicalRelayRates.lean) |
 | Theorem 2: impossibility | `PaperComputationalModel.impossibility` | [PaperComputationalModel](AsymptoticSubspace/PaperComputationalModel.lean) |
-| Definition 3: minimum broadcasting weight | `MinimumBroadcastWeightActualRounds` | [ActualRounds](AsymptoticSubspace/ActualRounds.lean) |
+| Definition 3: minimum broadcasting weight | `ComputationalModel.MinimumBroadcastWeightActualRounds` | [ActualRounds](AsymptoticSubspace/ActualRounds.lean) |
 | Lemma 4: distance to a half-space | `lemma_halfspace_dist` | [LemHalfspaceDistFormula](AsymptoticSubspace/LemHalfspaceDistFormula.lean) |
 | Lemma 5: half-space attraction | `lemma_halfspace_zone_actualRounds` | [ActualRoundLemmas](AsymptoticSubspace/ActualRoundLemmas.lean) |
 | Theorem 6: dimension reduction and volume deadline | `theorem_poss_exact_actualRounds` | [ActualRoundLemmas](AsymptoticSubspace/ActualRoundLemmas.lean) |

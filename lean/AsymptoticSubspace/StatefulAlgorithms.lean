@@ -1,36 +1,42 @@
 module
 
-public import AsymptoticSubspace.CorCharacterization
+public import AsymptoticSubspace.ThmRooted
+public import AsymptoticSubspace.EqualNeighbor
+public import AsymptoticSubspace.ImpossibilityProofCore
 
 @[expose] public section
 
 noncomputable section
 
-namespace AsymptoticSubspace.ComputationalModel
+namespace AsymptoticSubspace
 
-/-- A deterministic local protocol with arbitrary internal state, separately
-from its vector output. The state may contain an unbounded message history.
-Locality compares different graphs with identical received states and incoming
-neighborhoods, excluding access to remote edges. -/
-structure StatefulAlgorithm (V : Type*) (n : ℕ) (State : Type*) where
-  initialState : Proc n → V → State
-  step : Round → CommGraph n → (Proc n → State) → Proc n → State
-  output : Round → Proc n → State → V
-  output_initial : ∀ i x, output 0 i (initialState i x) = x
-  locality : ∀ t G H x y i,
-    (∀ j, G.edge j i ↔ H.edge j i) →
-    (∀ j, G.edge j i → x j = y j) → step t G x i = step t H y i
+open ComputationalModel ModelLemmas
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+  [FiniteDimensional ℝ V] {n : ℕ} [NeZero n]
+
+/-- A concrete local deterministic solver for every rooted oblivious adversary. -/
+theorem equalNeighbor_solves
+    (N : ObliviousMessageAdversary n) (s : ℕ) (hs : s < Module.finrank ℝ V)
+    (hroot : IsKRootedAdversary N (s + 1)) :
+    SolvesAsymptoticSubspace (equalNeighborAlgorithm V n) N s := by
+  intro G init hG
+  have hα : 0 < 1 / (n : ℝ) := by
+    have hn : (0 : ℝ) < n := by exact_mod_cast Nat.pos_of_ne_zero (NeZero.ne n)
+    positivity
+  obtain ⟨W, hdim, hconv, hvalid⟩ := theorem_rooted (s + 1) (by omega) (by omega)
+    (equalNeighborExecution G init) (1 / (n : ℝ)) hα (equalNeighbor_safe G init)
+    (fun t => hroot (G t) (hG t))
+  refine ⟨W, inferInstance, ?_, hconv, hvalid⟩
+  simpa using hdim
+
+end AsymptoticSubspace
+
+namespace AsymptoticSubspace.ComputationalModel
 
 namespace StatefulAlgorithm
 
 variable {V State : Type*} {n : ℕ} (A : StatefulAlgorithm V n State)
-
-def runState (G : Round → CommGraph n) (init : Proc n → V) : Round → Proc n → State
-  | 0 => fun i => A.initialState i (init i)
-  | t + 1 => fun i => A.step (t + 1) (G (t + 1)) (runState G init t) i
-
-def run (G : Round → CommGraph n) (init : Proc n → V) (t : Round) (i : Proc n) : V :=
-  A.output t i (A.runState G init t i)
 
 @[simp] lemma run_zero (G : Round → CommGraph n) (init : Proc n → V) (i : Proc n) :
     A.run G init 0 i = init i := A.output_initial i (init i)

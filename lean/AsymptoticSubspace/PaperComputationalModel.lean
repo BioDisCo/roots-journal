@@ -8,34 +8,17 @@ public import AsymptoticSubspace.ActualRounds
 noncomputable section
 
 /-!
-# Paper-facing computational model and exact specification
+# Theorem 2 and Corollary 20
 
-The graph, adversary, averaging, and convergence definitions are imported from
-`DefComputationalModel`. The general algorithm interface below allows arbitrary
-internal state and unbounded message histories, not only vector-valued memoryless
-state. Its locality axiom compares different graphs with the same incoming
-messages. `Solves` uses an affine agreement subspace of exactly dimension `s`,
-with graph admissibility required only on actual communication rounds `t ≥ 1`.
-
-Corollary 20 is given by `characterization` and `safe_averaging`: the former
-is the solvability equivalence, the latter its assertion for every safe
-averaging execution. `impossibility` is Theorem 2 for the same model.
+The computational model and problem specification are defined in
+`DefComputationalModel`. This file gives their impossibility and characterization
+results: `impossibility` is Theorem 2, while `characterization` and `safe_averaging`
+are the two assertions of Corollary 20.
 -/
 
 namespace AsymptoticSubspace.PaperComputationalModel
 
 open ComputationalModel
-
-/-- General deterministic message-local protocol, with separately specified
-vector output and initialization from each process's own input. -/
-abbrev Algorithm (V : Type*) (n : ℕ) (State : Type*) := StatefulAlgorithm V n State
-
-/-- The paper's two requirements: convergence onto one exactly `s`-dimensional
-affine subspace, and convergence onto the convex hull of the initial vectors. -/
-abbrev Solves {V State : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
-    [FiniteDimensional ℝ V] {n : ℕ} (A : Algorithm V n State)
-    (N : ComputationalModel.ObliviousMessageAdversary n) (s : ℕ) :=
-  StatefulSolvesExactActualRounds A N s
 
 universe u
 

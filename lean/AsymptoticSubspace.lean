@@ -20,7 +20,6 @@ public import AsymptoticSubspace.LemContract
 public import AsymptoticSubspace.LemConvexZeroHyperplane
 
 public import AsymptoticSubspace.ThmSolving
-public import AsymptoticSubspace.ThmImposs
 
 public import AsymptoticSubspace.ThmPoss
 public import AsymptoticSubspace.GraphProducts
@@ -28,7 +27,6 @@ public import AsymptoticSubspace.BlockExecution
 public import AsymptoticSubspace.ThmRooted
 public import AsymptoticSubspace.EqualNeighbor
 public import AsymptoticSubspace.CorBound
-public import AsymptoticSubspace.CorCharacterization
 public import AsymptoticSubspace.SymmetricBody
 public import AsymptoticSubspace.Symmetrization
 public import AsymptoticSubspace.ExternalGraphBound

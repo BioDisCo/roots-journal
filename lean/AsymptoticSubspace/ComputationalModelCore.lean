@@ -2,7 +2,7 @@
 -- Reader-facing statements live in `DefComputationalModel.lean`.
 module
 
-public import Mathlib
+public import AsymptoticSubspace.DefComputationalModel
 
 @[expose] public section
 
@@ -10,39 +10,6 @@ noncomputable section
 
 namespace AsymptoticSubspace
 namespace ComputationalModel
-
-abbrev Round := Nat
-abbrev Proc (n : Nat) := Fin n
-
-/-- Round communication graph on `n` processes with mandatory self-loops. -/
-structure CommGraph (n : Nat) where
-  edge : Proc n → Proc n → Prop
-  self_loop : ∀ i : Proc n, edge i i
-
-/-- Incoming neighbors of process `i` in graph `G`. -/
-def InNeighbors {n : Nat} (G : CommGraph n) (i : Proc n) : Set (Proc n) :=
-  {j | G.edge j i}
-
-/-- Reachability in a communication graph (directed path, including length-0). -/
-def Reachable {n : Nat} (G : CommGraph n) : Proc n → Proc n → Prop :=
-  Relation.ReflTransGen G.edge
-
-/-- `R` is a root set of `G` if every node is reachable from some node in `R`. -/
-def IsRootSet {n : Nat} (G : CommGraph n) (R : Finset (Proc n)) : Prop :=
-  ∀ i : Proc n, ∃ j : Proc n, j ∈ R ∧ Reachable G j i
-
-/-- A graph is `k`-rooted if it has some root set of size at most `k`. -/
-def IsKRooted {n : Nat} (G : CommGraph n) (k : Nat) : Prop :=
-  ∃ R : Finset (Proc n), R.card ≤ k ∧ IsRootSet G R
-
-/-- Oblivious message adversary as a nonempty set of communication graphs. -/
-structure ObliviousMessageAdversary (n : Nat) where
-  graphs : Set (CommGraph n)
-  nonempty : graphs.Nonempty
-
-/-- An oblivious message adversary is `k`-rooted if each of its graphs is `k`-rooted. -/
-def IsKRootedAdversary {n : Nat} (N : ObliviousMessageAdversary n) (k : Nat) : Prop :=
-  ∀ G : CommGraph n, G ∈ N.graphs → IsKRooted G k
 
 section Model
 
@@ -165,45 +132,10 @@ def AdmissibleTrace
 def ConvergesTo {V : Type*} [NormedAddCommGroup V] (x : Round → V) (l : V) : Prop :=
   ∀ ε : ℝ, 0 < ε → ∃ T : Round, ∀ t : Round, T ≤ t → ‖x t - l‖ < ε
 
-/-- Asymptotic convergence onto a set (`dist(x(t), S) → 0`). -/
-def ConvergesToSet {V : Type*} [NormedAddCommGroup V] (x : Round → V) (S : Set V) : Prop :=
-  S.Nonempty ∧
-    (∀ ε : ℝ, 0 < ε → ∃ T : Round, ∀ t : Round, T ≤ t → Metric.infDist (x t) S < ε)
-
-/-- Validity at limits: every process limit lies in the convex hull of initial outputs. -/
-def ValidityAtLimit
-    {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] {n : Nat}
-    (init limits : Proc n → V) : Prop :=
-  ∀ i : Proc n, limits i ∈ convexHull ℝ (Set.range init)
-
-/-- Subspace agreement at limits for target dimension `s`. -/
-def SubspaceAgreementAtLimit
-    {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] {n : Nat}
-    (s : Nat) (limits : Proc n → V) : Prop :=
-  ∃ E : AffineSubspace ℝ V,
-    FiniteDimensional ℝ E.direction ∧
-    Module.finrank ℝ E.direction ≤ s ∧
-    ∀ i : Proc n, limits i ∈ (E : Set V)
-
 /--
-Algorithm-level solvability of `d`-to-`s` asymptotic subspace consensus in adversary `N`
-using asymptotic convergence (`dist → 0`).
--/
-def SolvesAsymptoticSubspaceWithLimits
-    {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] {n : Nat}
-    (A : DeterministicAlgorithm V n)
-    (N : ObliviousMessageAdversary n) (s : Nat) : Prop :=
-  ∀ (Gseq : Round → CommGraph n) (init : Proc n → V),
-    AdmissibleTrace N Gseq →
-    ∃ limits : Proc n → V,
-      (∀ i : Proc n, ConvergesTo (fun t => (A.run Gseq init t) i) (limits i)) ∧
-      ValidityAtLimit init limits ∧
-      SubspaceAgreementAtLimit s limits
-
-/--
-Paper-faithful solver specification:
-- all process trajectories converge onto one `s`-dimensional affine subspace,
-- and each trajectory converges onto the convex hull of the initial values.
+Auxiliary specification for vector-state protocols: agreement in dimension at most `s`
+and convergence onto the initial convex hull. The arbitrary-state, exactly-dimensional
+specification is `PaperComputationalModel.Solves` in `DefComputationalModel`.
 -/
 def SolvesAsymptoticSubspace
     {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] {n : Nat}
@@ -221,10 +153,6 @@ def SolvesAsymptoticSubspace
 /-- `α`-safe averaging: every received value gets weight at least `α`. -/
 def AlphaSafe (E : AveragingExecution (V := V) n) (α : ℝ) : Prop :=
   ∀ t i j, (E.graphs t).edge j i → α ≤ E.weights t i j
-
-/-- `M` is a broadcasting set of `G` if every process has an incoming edge from some node in `M`. -/
-def IsBroadcastingSet (G : CommGraph n) (M : Finset (Proc n)) : Prop :=
-  ∀ i : Proc n, ∃ j : Proc n, j ∈ M ∧ G.edge j i
 
 /-- Minimum broadcasting weight with broadcasting-set function `M(t)`. -/
 def MinimumBroadcastWeight
