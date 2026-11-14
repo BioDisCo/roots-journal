@@ -2,6 +2,7 @@
 -- Reader-facing statements live in `Def*`, `Lem*`, and `Thm*` files.
 import AsymptoticSubspace.ComputationalModelCore
 import AsymptoticSubspace.PaperFormalizationCore
+import AsymptoticSubspace.LemContinuity
 
 noncomputable section
 
@@ -113,76 +114,42 @@ def thicknessOn
       exact ⟨(x, x), by simp [hx]⟩)
     (fun p => ‖P (p.1 - p.2)‖)
 
-/-- Complete formalization of Lemma `lem:continuity` from the paper. -/
+/-- The finite maximum used in the execution proofs is exactly set thickness. -/
+lemma thickness_eq_thicknessOn
+    (P : V →L[ℝ] V) (X : Finset V) (hX : X.Nonempty) :
+    thickness P (X : Set V) = thicknessOn P X hX := by
+  apply le_antisymm
+  · let x := hX.choose
+    have hx : x ∈ X := hX.choose_spec
+    have hnonneg : 0 ≤ thicknessOn P X hX := by
+      have h := Finset.le_sup' (f := fun p : V × V => ‖P (p.1 - p.2)‖)
+        (show (x, x) ∈ X.product X by simp [hx])
+      simpa [thicknessOn] using h
+    apply thickness_le P hnonneg
+    intro a ha b hb
+    exact Finset.le_sup' (f := fun p : V × V => ‖P (p.1 - p.2)‖)
+      (show (a, b) ∈ X.product X from Finset.mem_product.mpr ⟨ha, hb⟩)
+  · apply Finset.sup'_le
+    rintro ⟨x, y⟩ hxy
+    obtain ⟨hx, hy⟩ := Finset.mem_product.mp hxy
+    exact norm_sub_le_thickness P X.finite_toSet.isCompact hx hy
+
+/-- The finite maximum of pairwise distances equals the metric diameter. -/
+lemma diam_eq_pairDiameter (X : Finset V) (hX : X.Nonempty) :
+    Metric.diam (X : Set V) = pairDiameter X hX := by
+  simpa [thickness, thicknessOn, pairDiameter] using
+    thickness_eq_thicknessOn (ContinuousLinearMap.id ℝ V) X hX
+
+/-- The finite-set form of the compact-set thickness continuity estimate. -/
 theorem lemma_continuity_complete
     (X : Finset V) (hX : X.Nonempty)
     (P Q : V →L[ℝ] V) :
     |thicknessOn P X hX - thicknessOn Q X hX|
       ≤ ‖P - Q‖ * pairDiameter X hX := by
-  have hprod : (X.product X).Nonempty := by
-    rcases hX with ⟨x, hx⟩
-    exact ⟨(x, x), by simp [hx]⟩
-  let c : ℝ := ‖P - Q‖ * pairDiameter X hX
-  have hP_le : thicknessOn P X hX ≤ thicknessOn Q X hX + c := by
-    dsimp [thicknessOn]
-    refine Finset.sup'_le (H := hprod) (f := fun p : V × V => ‖P (p.1 - p.2)‖) ?_
-    intro p hp
-    have hpQ : ‖Q (p.1 - p.2)‖ ≤ thicknessOn Q X hX := by
-      exact Finset.le_sup' (f := fun r => ‖Q (r.1 - r.2)‖) hp
-    have hpdiam : ‖p.1 - p.2‖ ≤ pairDiameter X hX := by
-      exact Finset.le_sup' (f := fun r => ‖r.1 - r.2‖) hp
-    have hop : ‖(P - Q) (p.1 - p.2)‖ ≤ ‖P - Q‖ * ‖p.1 - p.2‖ := by
-      exact (P - Q).le_opNorm (p.1 - p.2)
-    have hmul : ‖P - Q‖ * ‖p.1 - p.2‖ ≤ c := by
-      dsimp [c]
-      exact mul_le_mul_of_nonneg_left hpdiam (norm_nonneg _)
-    have hstep :
-        ‖P (p.1 - p.2)‖ ≤ ‖Q (p.1 - p.2)‖ + c := by
-      calc
-        ‖P (p.1 - p.2)‖ = ‖(P - Q) (p.1 - p.2) + Q (p.1 - p.2)‖ := by
-              simp
-        _ ≤ ‖(P - Q) (p.1 - p.2)‖ + ‖Q (p.1 - p.2)‖ := norm_add_le _ _
-        _ ≤ ‖P - Q‖ * ‖p.1 - p.2‖ + ‖Q (p.1 - p.2)‖ := by
-              exact add_le_add hop (le_rfl)
-        _ ≤ c + ‖Q (p.1 - p.2)‖ := by
-              linarith [hmul]
-        _ = ‖Q (p.1 - p.2)‖ + c := by ring
-    have hpQ' : ‖Q (p.1 - p.2)‖ + c ≤ thicknessOn Q X hX + c := by
-      linarith [hpQ]
-    exact le_trans hstep hpQ'
-  have hQ_le : thicknessOn Q X hX ≤ thicknessOn P X hX + c := by
-    dsimp [thicknessOn]
-    refine Finset.sup'_le (H := hprod) (f := fun p : V × V => ‖Q (p.1 - p.2)‖) ?_
-    intro p hp
-    have hpP : ‖P (p.1 - p.2)‖ ≤ thicknessOn P X hX := by
-      exact Finset.le_sup' (f := fun r => ‖P (r.1 - r.2)‖) hp
-    have hpdiam : ‖p.1 - p.2‖ ≤ pairDiameter X hX := by
-      exact Finset.le_sup' (f := fun r => ‖r.1 - r.2‖) hp
-    have hop : ‖(Q - P) (p.1 - p.2)‖ ≤ ‖Q - P‖ * ‖p.1 - p.2‖ := by
-      exact (Q - P).le_opNorm (p.1 - p.2)
-    have hmul : ‖Q - P‖ * ‖p.1 - p.2‖ ≤ c := by
-      calc
-        ‖Q - P‖ * ‖p.1 - p.2‖ = ‖P - Q‖ * ‖p.1 - p.2‖ := by simp [norm_sub_rev]
-        _ ≤ ‖P - Q‖ * pairDiameter X hX := mul_le_mul_of_nonneg_left hpdiam (norm_nonneg _)
-        _ = c := by rfl
-    have hstep :
-        ‖Q (p.1 - p.2)‖ ≤ ‖P (p.1 - p.2)‖ + c := by
-      calc
-        ‖Q (p.1 - p.2)‖ = ‖(Q - P) (p.1 - p.2) + P (p.1 - p.2)‖ := by
-              simp
-        _ ≤ ‖(Q - P) (p.1 - p.2)‖ + ‖P (p.1 - p.2)‖ := norm_add_le _ _
-        _ ≤ ‖Q - P‖ * ‖p.1 - p.2‖ + ‖P (p.1 - p.2)‖ := by
-              exact add_le_add hop (le_rfl)
-        _ ≤ c + ‖P (p.1 - p.2)‖ := by
-              linarith [hmul]
-        _ = ‖P (p.1 - p.2)‖ + c := by ring
-    have hpP' : ‖P (p.1 - p.2)‖ + c ≤ thicknessOn P X hX + c := by
-      linarith [hpP]
-    exact le_trans hstep hpP'
-  rw [abs_sub_le_iff]
-  constructor
-  · linarith [hP_le]
-  · linarith [hQ_le]
+  rw [← thickness_eq_thicknessOn P X hX, ← thickness_eq_thicknessOn Q X hX,
+    ← diam_eq_pairDiameter X hX]
+  exact AsymptoticSubspace.lemma_continuity (X : Set V) X.finite_toSet.isCompact
+    (by simpa using hX) P Q
 
 abbrev Values (E : AveragingExecution (V := V) n) (t : Round) : Set V :=
   Set.range (E.outputs t)

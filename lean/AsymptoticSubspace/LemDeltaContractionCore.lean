@@ -18,15 +18,12 @@ variable {n : Nat}
 abbrev outputSet (E : AveragingExecution (V := V) n) (t : Round) : Finset V :=
   Finset.univ.image (E.outputs t)
 
-/-- Thickness at round `t`, defaulting to `0` when the output set is empty. -/
+/-- Set thickness of the process outputs at round `t`. -/
 def thicknessAt
     (P : V →L[ℝ] V)
     (E : AveragingExecution (V := V) n)
     (t : Round) : ℝ :=
-  if hX : (outputSet E t).Nonempty then
-    thicknessOn P (outputSet E t) hX
-  else
-    0
+  thickness P (Set.range (E.outputs t))
 
 /-- Part 1 helper: pairwise bounds imply a thickness bound at the next round. -/
 lemma one_step_pair_bound_implies_thickness
@@ -260,20 +257,8 @@ lemma thicknessAt_eq
     (t : Round)
     (hX : (outputSet E t).Nonempty) :
     thicknessAt P E t = thicknessOn P (outputSet E t) hX := by
-  simp [thicknessAt, hX]
-
-def diffSubmodule
-    (E : AveragingExecution (V := V) n)
-    (M : Round → Finset (Proc n))
-    (t : Round) : Submodule ℝ V :=
-  Submodule.span ℝ
-    (Set.range (fun p : M (t + 1) × M (t + 1) => E.outputs t p.1.1 - E.outputs t p.2.1))
-
-def roundProjection
-    (E : AveragingExecution (V := V) n)
-    (M : Round → Finset (Proc n))
-    (t : Round) : V →L[ℝ] V :=
-  (diffSubmodule E M t)ᗮ.starProjection
+  simpa [thicknessAt, outputSet] using
+    thickness_eq_thicknessOn P (outputSet E t) hX
 
 omit [DecidableEq V] in
 lemma roundProjection_isStarProjection
@@ -407,6 +392,16 @@ lemma diffSubmodule_eq_vectorSpan_valuesOn
           simp [Mset]
 
 omit [DecidableEq V] in
+/-- The round projection is the orthogonal projection onto the complement of
+the direction space of the broadcasting values before the update. -/
+theorem roundProjection_eq_orthogonal_vectorSpan
+    (E : AveragingExecution (V := V) n)
+    (M : Round → Finset (Proc n)) (t : Round) :
+    roundProjection E M t =
+      (vectorSpan ℝ (ValuesOn E t (M (t + 1))))ᗮ.starProjection := by
+  simp only [roundProjection, diffSubmodule_eq_vectorSpan_valuesOn]
+
+omit [DecidableEq V] in
 lemma roundProjection_kills_parallel
     (E : AveragingExecution (V := V) n)
     (M : Round → Finset (Proc n))
@@ -468,13 +463,14 @@ lemma diffSet_poly_norm_bound
     _ = ‖P (E.outputs t i - E.outputs t j)‖ := by simp [dist_eq_norm]
     _ ≤ thicknessOn P (outputSet E t) hXt := hsup
 
-omit [FiniteDimensional ℝ V] in
+omit [FiniteDimensional ℝ V] [DecidableEq V] in
 lemma thicknessAt_monotone
     [NeZero n]
     (P : V →L[ℝ] V)
     (E : AveragingExecution (V := V) n)
     (t : Round) :
     thicknessAt P E (t + 1) ≤ thicknessAt P E t := by
+  classical
   have hXt : (outputSet E t).Nonempty := outputSet_nonempty (E := E) t
   have hXnext : (outputSet E (t + 1)).Nonempty := outputSet_nonempty (E := E) (t + 1)
   have hpair :
@@ -494,6 +490,7 @@ lemma thicknessAt_monotone
   simpa [thicknessAt_eq (P := P) (E := E) (t := t) hXt,
     thicknessAt_eq (P := P) (E := E) (t := t + 1) hXnext] using hstep
 
+omit [DecidableEq V] in
 /-- One-step contraction for round-specific projection. -/
 lemma roundProjection_one_step [NeZero n]
     (E : AveragingExecution (V := V) n)
@@ -504,6 +501,7 @@ lemma roundProjection_one_step [NeZero n]
     (hmbw : MinimumBroadcastWeight (V := V) E M α) :
     thicknessAt (roundProjection E M t) E (t + 1)
       ≤ (1 - α) * thicknessAt (roundProjection E M t) E t := by
+  classical
   have hXt := outputSet_nonempty (E := E) t
   have hXnext := outputSet_nonempty (E := E) (t + 1)
   rw [thicknessAt_eq _ E t hXt, thicknessAt_eq _ E (t + 1) hXnext]
@@ -512,26 +510,15 @@ lemma roundProjection_one_step [NeZero n]
     (diffSet_poly_norm_bound (roundProjection E M t) E t hXt)
 
 
-omit [FiniteDimensional ℝ V] in
+omit [FiniteDimensional ℝ V] [DecidableEq V] in
 lemma thicknessAt_nonneg
     (P : V →L[ℝ] V)
     (E : AveragingExecution (V := V) n)
     (t : Round) :
     0 ≤ thicknessAt P E t := by
-  by_cases hX : (outputSet E t).Nonempty
-  · have hthick_nonneg : 0 ≤ thicknessOn P (outputSet E t) hX := by
-      rcases hX with ⟨x, hx⟩
-      have hp : (x, x) ∈ (outputSet E t).product (outputSet E t) := by
-        simp [hx]
-      have hle : ‖P (x - x)‖ ≤ thicknessOn P (outputSet E t) (by exact ⟨x, hx⟩) := by
-        dsimp [thicknessOn]
-        exact Finset.le_sup' (f := fun p : V × V => ‖P (p.1 - p.2)‖) hp
-      calc
-        0 = ‖P (x - x)‖ := by simp
-        _ ≤ thicknessOn P (outputSet E t) (by exact ⟨x, hx⟩) := hle
-    simpa [thicknessAt, hX] using hthick_nonneg
-  · simp [thicknessAt, hX]
+  exact thickness_nonneg P _
 
+omit [DecidableEq V] in
 theorem paper_delta_contraction_bridge_ge_one [NeZero n]
     (k : Nat)
     (E : AveragingExecution (V := V) n)
@@ -546,6 +533,7 @@ theorem paper_delta_contraction_bridge_ge_one [NeZero n]
       IsStarProjection Pi ∧
       Module.finrank ℝ (LinearMap.ker (Pi : V →ₗ[ℝ] V)) ≤ k - 1 ∧
       ConvergesTo (fun t => thicknessAt Pi E t) 0 := by
+  classical
   let Pi : V →L[ℝ] V := roundProjection E M 0
   have hPiStar : IsStarProjection Pi := roundProjection_isStarProjection E M 0
   have hPiKer : Module.finrank ℝ (LinearMap.ker (Pi : V →ₗ[ℝ] V)) ≤ k - 1 :=
@@ -730,11 +718,12 @@ lemma convergesTo_of_tendsto {β : Type*} [NormedAddCommGroup β]
   intro t ht
   simpa [Metric.mem_ball, dist_eq_norm] using hT t ht
 
-omit [FiniteDimensional ℝ V] in
+omit [FiniteDimensional ℝ V] [DecidableEq V] in
 lemma thicknessAt_antitone [NeZero n]
     (P : V →L[ℝ] V)
     (E : AveragingExecution (V := V) n) :
     Antitone (fun t => thicknessAt P E t) := by
+  classical
   intro s t hst
   rcases Nat.exists_eq_add_of_le hst with ⟨d, rfl⟩
   have haux : ∀ m : ℕ, thicknessAt P E (s + m) ≤ thicknessAt P E s := by
@@ -798,7 +787,7 @@ lemma adjacent_norm_converges_to_zero
     simpa [abs_of_nonneg hnonneg] using hlt
   simpa [Real.norm_eq_abs] using habs
 
-omit [FiniteDimensional ℝ V] in
+omit [FiniteDimensional ℝ V] [DecidableEq V] in
 lemma paper_delta_contraction_convergence [NeZero n]
     (E : AveragingExecution (V := V) n)
     (M : Round → Finset (Proc n))
@@ -813,6 +802,7 @@ lemma paper_delta_contraction_convergence [NeZero n]
     (hφtendsto : Filter.Tendsto (PiSeq ∘ φ) Filter.atTop (nhds Pi))
     (hOneStep : ∀ t, thicknessAt (PiSeq t) E (t + 1) ≤ (1 - α) * thicknessAt (PiSeq t) E t) :
     ConvergesTo (fun t => thicknessAt Pi E t) 0 := by
+  classical
   let a : ℕ → ℝ := fun i => thicknessAt (PiSeq (φ i)) E (φ i + 1)
   let D : ℝ := pairDiameter (outputSet E 0) (outputSet_nonempty (E := E) 0)
   -- `φ i + 1` is the selected round τᵢ; sample after its update.
@@ -970,6 +960,7 @@ lemma paper_delta_contraction_convergence [NeZero n]
     simpa [abs_of_nonneg hnonneg_t] using ht_lt
   simpa [Real.norm_eq_abs] using habs
 
+omit [DecidableEq V] in
 theorem paper_delta_contraction_bridge [NeZero n]
     (k : Nat)
     (E : AveragingExecution (V := V) n)
@@ -983,6 +974,7 @@ theorem paper_delta_contraction_bridge [NeZero n]
       IsStarProjection Pi ∧
       Module.finrank ℝ (LinearMap.ker (Pi : V →ₗ[ℝ] V)) ≤ k - 1 ∧
       ConvergesTo (fun t => thicknessAt Pi E t) 0 := by
+  classical
   by_cases hα_lt_one : α < 1
   · let PiSeq : Round → V →L[ℝ] V := fun t => roundProjection E M t
     have hPiStar : ∀ t, IsStarProjection (PiSeq t) := fun t =>
@@ -1006,6 +998,7 @@ theorem paper_delta_contraction_bridge [NeZero n]
       paper_delta_contraction_bridge_ge_one k E M α _hk hα_pos
         (le_of_not_gt hα_lt_one) hmbw hcard
 
+omit [DecidableEq V] in
 theorem lemma_Delta_contraction_core [NeZero n]
     (k : Nat)
     (_hk : 1 ≤ k)

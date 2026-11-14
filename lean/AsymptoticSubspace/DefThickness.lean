@@ -1,66 +1,53 @@
 -- TeX label: def:thickness
--- Definitions of pairDiameter and thicknessOn (projection-based thickness).
-
-import AsymptoticSubspace.LemDeltaContractionCore
+import AsymptoticSubspace.ComputationalModelCore
 
 /-!
 # Definition 16: round projections and thickness
 
-`roundProjection E M t` is the paper's `Π_{t+1}`: it projects orthogonally
-onto `dir(X_{M(t+1)}(t))ᗮ`. The equality below identifies its construction
-with this description. `thicknessOn` is `Δ_Π(X)`; `pairDiameter` supplies
-the Lipschitz constant in Lemma 18.
+`roundProjection E M t` is the paper's `Π_(t+1)`; its direction space is
+spanned by differences of the broadcasting values at time `t`.
+`thickness P X` is `Δ_P(X)`. On nonempty compact sets, `thickness_eq_max`
+in `Thickness.lean` proves that the projected diameter is exactly the
+maximum of `‖P (x - y)‖` used in the paper.
 -/
+
+noncomputable section
 
 namespace AsymptoticSubspace
 
-/-- The round projection is the orthogonal projection onto the complement of
-the direction space of the broadcasting values before the update. -/
-theorem roundProjection_eq_orthogonal_vectorSpan
-    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
-    [FiniteDimensional ℝ V] {n : ℕ}
-    (E : ComputationalModel.AveragingExecution (V := V) n)
-    (M : ComputationalModel.Round → Finset (ComputationalModel.Proc n)) (t : ℕ) :
-    roundProjection E M t =
-      (vectorSpan ℝ (ModelLemmas.ValuesOn E t (M (t + 1))))ᗮ.starProjection := by
-  simp only [roundProjection, diffSubmodule_eq_vectorSpan_valuesOn]
+open ComputationalModel
 
-def pairDiameter
-    {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
-    (X : Finset V) (hX : X.Nonempty) : ℝ :=
-  (X.product X).sup'
-    (by
-      rcases hX with ⟨x, hx⟩
-      exact ⟨(x, x), by simp [hx]⟩)
-    (fun p => ‖p.1 - p.2‖)
+section RoundProjection
 
-def thicknessOn
-    {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
-    (P : V →L[ℝ] V)
-    (X : Finset V) (hX : X.Nonempty) : ℝ :=
-  (X.product X).sup'
-    (by
-      rcases hX with ⟨x, hx⟩
-      exact ⟨(x, x), by simp [hx]⟩)
-    (fun p => ‖P (p.1 - p.2)‖)
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+  [FiniteDimensional ℝ V] {n : ℕ}
 
-section Verification
+/-- Direction space of the broadcasting values before update `t + 1`. -/
+def diffSubmodule
+    (E : AveragingExecution (V := V) n)
+    (M : Round → Finset (Proc n))
+    (t : Round) : Submodule ℝ V :=
+  Submodule.span ℝ
+    (Set.range (fun p : M (t + 1) × M (t + 1) => E.outputs t p.1.1 - E.outputs t p.2.1))
+
+/-- Definition 16: the paper's `Π_(t+1)`, projecting onto the orthogonal
+complement of the direction space of the broadcasting values. -/
+def roundProjection
+    (E : AveragingExecution (V := V) n)
+    (M : Round → Finset (Proc n))
+    (t : Round) : V →L[ℝ] V :=
+  (diffSubmodule E M t)ᗮ.starProjection
+
+end RoundProjection
+
+section Thickness
 
 variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
 
-/-- Verification anchor: local pair-diameter formula matches the model bridge definition. -/
-@[simp] theorem pairDiameter_eq_modelLemmas
-    (X : Finset V) (hX : X.Nonempty) :
-    pairDiameter X hX = ModelLemmas.pairDiameter X hX :=
-  rfl
+/-- The paper's `Δ_P(X)`: the diameter of the image of `X` under `P`. -/
+def thickness (P : V →L[ℝ] V) (X : Set V) : ℝ :=
+  Metric.diam (P '' X)
 
-/-- Verification anchor: local thickness formula matches the model bridge definition. -/
-@[simp] theorem thicknessOn_eq_modelLemmas
-    (P : V →L[ℝ] V)
-    (X : Finset V) (hX : X.Nonempty) :
-    thicknessOn P X hX = ModelLemmas.thicknessOn P X hX :=
-  rfl
-
-end Verification
+end Thickness
 
 end AsymptoticSubspace

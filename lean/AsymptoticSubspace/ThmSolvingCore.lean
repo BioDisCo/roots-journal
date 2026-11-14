@@ -17,8 +17,6 @@ variable {n : Nat}
 
 section ProjectionHelpers
 
-variable [DecidableEq V]
-
 lemma proj_dist_le_thickness_of_mem_poly [NeZero n]
     (Pi : V →L[ℝ] V)
     (E : AveragingExecution (V := V) n)
@@ -27,6 +25,7 @@ lemma proj_dist_le_thickness_of_mem_poly [NeZero n]
     (hx : x ∈ Poly E t)
     (hy : y ∈ Poly E t) :
     dist (Pi x) (Pi y) ≤ thicknessAt Pi E t := by
+  classical
   have hXt : (outputSet E t).Nonempty := outputSet_nonempty (E := E) t
   have hbound :
       ‖Pi (x - y)‖ ≤ thicknessOn Pi (outputSet E t) hXt :=
@@ -44,27 +43,11 @@ end ProjectionHelpers
 
 section ProjectedLimit
 
-variable [DecidableEq V]
-
 /-- The diameter of the projected hull is exactly the thickness of the outputs. -/
-lemma projected_poly_diam [NeZero n]
+lemma projected_poly_diam
     (Pi : V →L[ℝ] V) (E : AveragingExecution (V := V) n) (t : Round) :
     Metric.diam (Pi '' Poly E t) = thicknessAt Pi E t := by
-  have hcompact := (poly_compact E t).image Pi.continuous
-  apply le_antisymm
-  · apply Metric.diam_le_of_forall_dist_le (thicknessAt_nonneg Pi E t)
-    rintro _ ⟨x, hx, rfl⟩ _ ⟨y, hy, rfl⟩
-    exact proj_dist_le_thickness_of_mem_poly Pi E t hx hy
-  · rw [thicknessAt_eq Pi E t (outputSet_nonempty E t)]
-    apply Finset.sup'_le
-    rintro ⟨x, y⟩ hxy
-    obtain ⟨hx, hy⟩ := Finset.mem_product.mp hxy
-    obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp hx
-    obtain ⟨j, _, rfl⟩ := Finset.mem_image.mp hy
-    simpa [dist_eq_norm, map_sub] using
-      Metric.dist_le_diam_of_mem hcompact.isBounded
-        (mem_image_of_mem Pi (output_mem_poly_self E t i))
-        (mem_image_of_mem Pi (output_mem_poly_self E t j))
+  exact thickness_convexHull Pi (Set.range (E.outputs t))
 
 /-- The nonempty nested projected hulls have a singleton intersection when
 their diameters tend to zero. The point belongs to every projected hull. -/
@@ -72,6 +55,7 @@ lemma projected_poly_inter_eq_singleton [NeZero n]
     (Pi : V →L[ℝ] V) (E : AveragingExecution (V := V) n)
     (hthick : ConvergesTo (fun t => thicknessAt Pi E t) 0) :
     ∃ c : V, (⋂ t, Pi '' Poly E t) = {c} := by
+  classical
   have hcompact (t) : IsCompact (Pi '' Poly E t) :=
     (poly_compact E t).image Pi.continuous
   obtain ⟨c, hc⟩ := IsCompact.nonempty_iInter_of_sequence_nonempty_isCompact_isClosed
@@ -94,7 +78,6 @@ lemma projected_poly_inter_eq_singleton [NeZero n]
     simpa [Real.norm_eq_abs, abs_of_nonneg (thicknessAt_nonneg Pi E T)] using hsmall
   simpa using (hdist.trans this.le)
 
-omit [DecidableEq V] in
 /-- An orthogonal projection's fiber over a point in its image is the translate
 of its kernel, and distance to that fiber is the projected distance. -/
 lemma projection_fiber_distance [FiniteDimensional ℝ V]

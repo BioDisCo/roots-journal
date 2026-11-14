@@ -8,7 +8,7 @@ open ComputationalModel
 open ModelLemmas
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
-  [FiniteDimensional ℝ V] [DecidableEq V]
+  [FiniteDimensional ℝ V]
 variable {n : Nat}
 
 /--

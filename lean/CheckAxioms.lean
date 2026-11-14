@@ -19,6 +19,20 @@ run_cmd do
     throwError "Unexpected axioms: {unexpected}"
   logInfo m!"Checked {names.size} project theorems: only propext, Classical.choice, and Quot.sound."
   let dependencies := fun name => (((CollectAxioms.collect name).run env).run {}).2.visited
+  unless (dependencies ``AsymptoticSubspace.thickness_eq_max).contains
+      ``AsymptoticSubspace.exists_thickness_eq_norm do
+    throwError "Definition 16 does not establish attainment on compact sets"
+  let thicknessContraction := dependencies
+    ``AsymptoticSubspace.lemma_Delta_contraction_actualRounds
+  for name in #[``AsymptoticSubspace.thickness,
+      ``AsymptoticSubspace.ModelLemmas.thickness_eq_thicknessOn,
+      ``AsymptoticSubspace.lemma_continuity] do
+    unless thicknessContraction.contains name do
+      throwError "Lemma 19 does not use the compact-set thickness development: {name}"
+  unless (dependencies ``AsymptoticSubspace.ThmSolving.projected_poly_diam).contains
+      ``AsymptoticSubspace.thickness_convexHull do
+    throwError "The projected-hull diameter does not use convex-hull invariance"
+  logInfo "Checked compact-set thickness, its finite computation, and convex-hull invariance."
   let contraction := dependencies ``AsymptoticSubspace.lemma_contract_of_le_one
   for name in #[``AsymptoticSubspace.ModelLemmas.lemma_halfspace_zone,
       ``AsymptoticSubspace.PaperFormalization.sectionRadius_concave,

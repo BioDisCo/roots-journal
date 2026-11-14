@@ -71,7 +71,7 @@ Numbers refer to the manuscript. Declaration names are in the
 | Theorem 13: convergence onto dimension `k - 1` | `theorem_solving_exact_actualRounds` | [ActualRounds](AsymptoticSubspace/ActualRounds.lean) |
 | Lemma 14: broadcasting/residual decomposition | `lemma_xi_xip_actualRounds` | [ActualRoundLemmas](AsymptoticSubspace/ActualRoundLemmas.lean) |
 | Lemma 15: difference decomposition | `lemma_differences_actualRounds` | [ActualRoundLemmas](AsymptoticSubspace/ActualRoundLemmas.lean) |
-| Definition 16: projection and thickness | `roundProjection_eq_orthogonal_vectorSpan`, `thicknessOn` | [DefThickness](AsymptoticSubspace/DefThickness.lean) |
+| Definition 16: projection and thickness | `roundProjection`, `thickness` | [DefThickness](AsymptoticSubspace/DefThickness.lean) |
 | Lemma 17: accumulation of projections | `lemma_roundProjection_accumulation` | [LemAccumulationPoint](AsymptoticSubspace/LemAccumulationPoint.lean) |
 | Lemma 18: continuity of thickness | `lemma_continuity`, `thickness_lipschitz` | [LemContinuity](AsymptoticSubspace/LemContinuity.lean) |
 | Lemma 19: contraction of thickness | `lemma_Delta_contraction_actualRounds` | [ActualRoundLemmas](AsymptoticSubspace/ActualRoundLemmas.lean) |
@@ -97,9 +97,13 @@ formula used in Lemma 11: the coordinate simplex has volume `1 / d!`, and
 linear change of variables gives the absolute determinant factor.
 
 For Theorem 13, [LemDeltaContractionCore](AsymptoticSubspace/LemDeltaContractionCore.lean)
-constructs the round projections and proves contraction towards a limiting
-projection. The recurrence samples outputs after each selected update and uses
+uses the round projections defined in [DefThickness](AsymptoticSubspace/DefThickness.lean)
+and proves contraction towards a limiting projection. The recurrence samples outputs after each selected update and uses
 the paper's projection-change error, followed by the geometric-sum estimate.
+Definition 16 and Lemma 18 use thickness on nonempty compact sets.
+`thickness_eq_max` proves the maximum formula; `thickness_convexHull` proves
+convex-hull invariance. `thicknessAt` uses this same set-based definition,
+and `ModelLemmas.thickness_eq_thicknessOn` identifies its finite computation.
 [ThmSolvingCore](AsymptoticSubspace/ThmSolvingCore.lean) proves that the projected
 hulls have a singleton intersection and identifies the affine fiber and its
 exact distance formula. `roundProjection E M t` is the paper's `Π_(t+1)`.

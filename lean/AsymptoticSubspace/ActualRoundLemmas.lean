@@ -91,7 +91,7 @@ theorem lemma_contract_actualRounds
 cardinality, or minimum-weight hypotheses. -/
 theorem lemma_Delta_contraction_actualRounds
     {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
-    [FiniteDimensional ℝ V] [DecidableEq V] {n : ℕ} [NeZero n]
+    [FiniteDimensional ℝ V] {n : ℕ} [NeZero n]
     (k : ℕ) (hk : 1 ≤ k)
     (E : AveragingExecution (V := V) n) (M : Round → Finset (Proc n))
     (α : ℝ) (hα : 0 < α) (hmbw : MinimumBroadcastWeightActualRounds E M α)
