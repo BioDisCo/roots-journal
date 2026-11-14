@@ -7,5 +7,5 @@ The upstream Apache-2.0 license is reproduced in `LICENSE`.
 
 Local changes: imports and declarations are placed under
 `AsymptoticSubspace.BrunnMinkowski`; compatibility fixes target Lean/mathlib
-4.27.0. These are source proofs rebuilt locally, not assumed inequalities.
+4.35.0. These are source proofs rebuilt locally, not assumed inequalities.
 The public symmetrization results are covered by the transitive axiom audit.

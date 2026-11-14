@@ -1,4 +1,6 @@
-import AsymptoticSubspace.PhysicalAveraging
+module
+
+public import AsymptoticSubspace.PhysicalAveraging
 
 /-!
 # Graph products and relayed averaging
@@ -10,6 +12,8 @@ executions. `physical_averaging_linear_convergence` instantiates it for the
 local-rule implementation. `ordinary_averaging_linear_convergence` gives
 the ordinary-averaging clause by applying the volume theorem to blocks.
 -/
+
+@[expose] public section
 
 noncomputable section
 

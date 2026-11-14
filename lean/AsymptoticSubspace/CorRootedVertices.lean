@@ -1,5 +1,7 @@
 -- TeX label: cor:rooted-vertices
-import AsymptoticSubspace.ThmLimitingVertices
+module
+
+public import AsymptoticSubspace.ThmLimitingVertices
 
 /-!
 # Limiting convex hulls under k-rooted communication
@@ -12,6 +14,8 @@ The proof groups `L = ⌈((π² + 6) / 6) n + 1⌉` consecutive rounds. The samp
 execution has the original outputs at block boundaries and the corresponding
 products of weights. Its broadcasting weight is at least `α ^ L`.
 -/
+
+@[expose] public section
 
 noncomputable section
 

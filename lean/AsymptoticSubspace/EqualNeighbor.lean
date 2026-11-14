@@ -1,4 +1,8 @@
-import AsymptoticSubspace.ComputationalModelCore
+module
+
+public import AsymptoticSubspace.ComputationalModelCore
+
+@[expose] public section
 
 noncomputable section
 
@@ -74,7 +78,7 @@ theorem equalNeighbor_safe [NeZero n] (G : Round → CommGraph n) (init : Proc n
   intro t i j h
   change (G t).edge j i at h
   change 1 / (n : ℝ) ≤ equalNeighborWeight (G t) i j
-  rw [equalNeighborWeight, if_pos h, ← one_div]
+  rw [equalNeighborWeight, ite_eq_left h, ← one_div]
   apply one_div_le_one_div_of_le
   · exact_mod_cast inNeighborFinset_card_pos (G t) i
   · exact_mod_cast (show (inNeighborFinset (G t) i).card ≤ n from by

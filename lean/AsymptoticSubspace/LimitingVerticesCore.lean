@@ -1,6 +1,8 @@
 -- Internal proof infrastructure for `ThmLimitingVertices.lean`.
-import AsymptoticSubspace.ActualRoundLemmas
-import AsymptoticSubspace.NestedHulls
+module
+
+public import AsymptoticSubspace.ActualRoundLemmas
+public import AsymptoticSubspace.NestedHulls
 
 /-!
 # Theorem 21: the limiting hull has at most k vertices
@@ -18,6 +20,8 @@ After the compactness helpers, the proof follows the manuscript's order:
 `limiting_vertices_core`. The helpers `poly_limit_nonempty` and
 `poly_tendsto_limit` give nonemptiness and Hausdorff convergence of the nested hulls.
 -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -56,17 +60,23 @@ lemma mem_convexHull_of_tendsto {ι : Type*} [Finite ι]
     (hmem : ∀ r, z r ∈ convexHull ℝ (range (x r))) :
     zStar ∈ convexHull ℝ (range xStar) := by
   classical
-  letI := Fintype.ofFinite ι
+  let := Fintype.ofFinite ι
   choose w hw hs heq using fun r => exists_coefficients (x r) (hmem r)
+  have hcompact : IsCompact {w : ι → ℝ | (∀ i, 0 ≤ w i) ∧ ∑ i, w i = 1} := by
+    have h := isCompact_range (continuous_pi (fun i : ι =>
+      Convexity.StdSimplex.continuous_weights_apply ℝ i))
+    simpa only [Convexity.StdSimplex.range_toFun_comp_weights, Set.iInter_ofPred,
+      ← Set.ofPred_and] using h
   obtain ⟨wStar, hwStar, φ, hφ, hwlim⟩ :=
-    (isCompact_stdSimplex ι).tendsto_subseq (fun r => ⟨hw r, hs r⟩)
+    hcompact.tendsto_subseq (fun r => ⟨hw r, hs r⟩)
   have hsum : Tendsto (fun r => ∑ i, w (φ r) i • x (φ r) i) atTop
       (𝓝 (∑ i, wStar i • xStar i)) := by
-    apply tendsto_finset_sum
+    apply tendsto_finsetSum
     intro i _
     exact ((tendsto_pi_nhds.mp hwlim) i).smul ((hx i).comp hφ.tendsto_atTop)
   have heqStar : (∑ i, wStar i • xStar i) = zStar :=
-    tendsto_nhds_unique (by simpa only [heq] using hsum) (hz.comp hφ.tendsto_atTop)
+    tendsto_nhds_unique (by simpa only [heq, Function.comp_def] using hsum)
+      (hz.comp hφ.tendsto_atTop)
   exact mem_convexHull_of_exists_fintype wStar xStar hwStar.1 hwStar.2
     (fun i => mem_range_self i) heqStar
 
@@ -241,10 +251,10 @@ theorem limiting_vertices_core (E : AveragingExecution (V := V) n)
     -- finiteness of the vertices lets us remove that closure here.
     have hc : IsCompact (⋂ t, Poly E t) := by
       rw [hHull]
-      exact (finite_range xStar).isCompact_convexHull
+      exact (finite_range xStar).isCompact_convexHull ℝ
     have hconv : Convex ℝ (⋂ t, Poly E t) :=
       convex_iInter (fun t => convex_convexHull ℝ (Values E t))
-    simpa only [(hfinite.isCompact_convexHull).isClosed.closure_eq] using
+    simpa only [(hfinite.isCompact_convexHull ℝ).isClosed.closure_eq] using
       closure_convexHull_extremePoints hc hconv
   have hsmall : (⋂ t, Poly E t) = convexHull ℝ (xStar '' (S : Set (Proc n))) := by
     apply Subset.antisymm

@@ -1,6 +1,10 @@
 -- Internal plumbing module.
 -- Reader-facing statement is in `LemDeltaContraction.lean`.
-import AsymptoticSubspace.AveragingHulls
+module
+
+public import AsymptoticSubspace.AveragingHulls
+
+@[expose] public section
 
 noncomputable section
 
@@ -612,13 +616,13 @@ lemma isProj_starProjection
     LinearMap.IsProj K ((K.starProjection : V →L[ℝ] V).toLinearMap) := by
   refine ⟨?_, ?_⟩
   · intro x
-    change ((↑(K.orthogonalProjection x) : V)) ∈ K
-    exact (K.orthogonalProjection x).property
+    change ((↑(K.orthogonalProjectionOnto x) : V)) ∈ K
+    exact (K.orthogonalProjectionOnto x).property
   · intro x hx
     let xs : K := ⟨x, hx⟩
-    have hself : K.orthogonalProjection x = xs := by
-      simpa [xs] using (Submodule.orthogonalProjection_mem_subspace_eq_self xs)
-    change ((↑(K.orthogonalProjection x) : V)) = x
+    have hself : K.orthogonalProjectionOnto x = xs := by
+      simpa [xs] using (Submodule.orthogonalProjectionOnto_mem_subspace_eq_self xs)
+    change ((↑(K.orthogonalProjectionOnto x) : V)) = x
     rw [hself]
 
 omit [DecidableEq V] in
@@ -763,7 +767,7 @@ lemma pairDiameter_le_initial [NeZero n]
   have hX0 : (outputSet E 0).Nonempty := outputSet_nonempty (E := E) 0
   simpa [thicknessAt_eq (P := Pid) (E := E) (t := t) hXt,
     thicknessAt_eq (P := Pid) (E := E) (t := 0) hX0,
-    pairDiameter, thicknessOn] using hle
+    pairDiameter, thicknessOn, Pid] using hle
 
 omit [FiniteDimensional ℝ V] [DecidableEq V] in
 lemma adjacent_norm_converges_to_zero

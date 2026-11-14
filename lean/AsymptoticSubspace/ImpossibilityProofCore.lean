@@ -1,6 +1,10 @@
 -- Internal plumbing module.
 -- Reader-facing statement is in `ThmImposs.lean`.
-import AsymptoticSubspace.ModelBridgeCore
+module
+
+public import AsymptoticSubspace.ModelBridgeCore
+
+@[expose] public section
 
 noncomputable section
 
@@ -41,8 +45,8 @@ theorem exists_minimal_reacher_to
   let S : Set (Proc n) := {j : Proc n | Reachable G j i}
   have hSfin : S.Finite := Set.toFinite S
   have hSne : S.Nonempty := ⟨i, Relation.ReflTransGen.refl⟩
-  letI : LE (Proc n) := ⟨fun a b => Reachable G a b⟩
-  letI : IsTrans (Proc n) (· ≤ ·) := ⟨fun _ _ _ => Relation.ReflTransGen.trans⟩
+  let : LE (Proc n) := ⟨fun a b => Reachable G a b⟩
+  let : IsTrans (Proc n) (· ≤ ·) := ⟨fun _ _ _ => Relation.ReflTransGen.trans⟩
   obtain ⟨r, hrS, hrMin⟩ := hSfin.exists_minimal hSne
   refine ⟨r, ?_, hrS⟩
   intro j hjr
@@ -513,7 +517,7 @@ theorem exists_init_affineIndependent_of_finrank_eq
     (roots : Finset (Proc n)) (hcard : roots.card = s + 2) :
     ∃ init : Proc n → V, AffineIndependent ℝ (fun p : roots => init p) := by
   have hfin_succ : Module.finrank ℝ V = Nat.succ s := by simpa [Nat.succ_eq_add_one] using hfin
-  letI : FiniteDimensional ℝ V := FiniteDimensional.of_finrank_eq_succ hfin_succ
+  let : FiniteDimensional ℝ V := FiniteDimensional.of_finrank_eq_succ hfin_succ
   have hcardRoots : Fintype.card roots = Module.finrank ℝ V + 1 := by
     calc
       Fintype.card roots = roots.card := by simp
@@ -540,7 +544,7 @@ theorem exists_init_affineIndependent_of_finrank_gt
     (roots : Finset (Proc n)) (hcard : roots.card = s + 2) :
     ∃ init : Proc n → V, AffineIndependent ℝ (fun p : roots => init p) := by
   have hpos : 0 < Module.finrank ℝ V := lt_of_le_of_lt (Nat.zero_le s) hfin
-  letI : FiniteDimensional ℝ V := FiniteDimensional.of_finrank_pos hpos
+  let : FiniteDimensional ℝ V := FiniteDimensional.of_finrank_pos hpos
   let m : Nat := Module.finrank ℝ V + 1
   have hm : s + 2 ≤ m := by
     dsimp [m]
@@ -554,7 +558,7 @@ theorem exists_init_affineIndependent_of_finrank_gt
   let emb : Fin (s + 2) ↪ Fin m := Fin.castLEEmb hm
   let pstd : Fin (s + 2) → V := fun j => b (emb j)
   have hpstd : AffineIndependent ℝ pstd := by
-    simpa [pstd] using b.ind.comp_embedding emb
+    exact b.ind.comp_embedding emb
   have hcardRoots : Fintype.card roots = s + 2 := by
     simpa using hcard
   have hcardRootsFin : Fintype.card roots = Fintype.card (Fin (s + 2)) := by
@@ -905,7 +909,7 @@ theorem lemma_imposs_unsolvable_full_paper
   have hAdm : AdmissibleTrace N Gseq := admissible_staticTrace (N := N) (s := s) d
   rcases hA Gseq init hAdm with ⟨E, hfdE, hdimE, hToE, hToHull⟩
   have hclosedDir : IsClosed (E.direction : Set V) := by
-    letI : FiniteDimensional ℝ E.direction := hfdE
+    let : FiniteDimensional ℝ E.direction := hfdE
     exact Submodule.closed_of_finiteDimensional (s := E.direction)
   have hclosedE : IsClosed (E : Set V) :=
     (AffineSubspace.isClosed_direction_iff (R := ℝ) (V := V) (P := V) E).1 hclosedDir

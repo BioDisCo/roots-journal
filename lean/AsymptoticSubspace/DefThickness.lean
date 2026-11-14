@@ -1,5 +1,7 @@
 -- TeX label: def:thickness
-import AsymptoticSubspace.ComputationalModelCore
+module
+
+public import AsymptoticSubspace.ComputationalModelCore
 
 /-!
 # Definition 16: round projections and thickness
@@ -10,6 +12,8 @@ spanned by differences of the broadcasting values at time `t`.
 in `Thickness.lean` proves that the projected diameter is exactly the
 maximum of `‖P (x - y)‖` used in the paper.
 -/
+
+@[expose] public section
 
 noncomputable section
 

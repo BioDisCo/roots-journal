@@ -1,4 +1,8 @@
-import AsymptoticSubspace.ThmSolvingCore
+module
+
+public import AsymptoticSubspace.ThmSolvingCore
+
+@[expose] public section
 
 noncomputable section
 

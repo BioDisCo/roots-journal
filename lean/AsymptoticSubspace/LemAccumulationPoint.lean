@@ -2,9 +2,13 @@
 -- A sequence of orthogonal projections has a convergent subsequence
 -- whose limit is also an orthogonal projection.
 
-import AsymptoticSubspace.LemDeltaContractionCore
+module
+
+public import AsymptoticSubspace.LemDeltaContractionCore
 
 /-! Lemma 17: accumulation of orthogonal projections. -/
+
+@[expose] public section
 
 noncomputable section
 

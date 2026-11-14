@@ -1,5 +1,9 @@
-import AsymptoticSubspace.CorBound
-import AsymptoticSubspace.LinearGraphBound
+module
+
+public import AsymptoticSubspace.CorBound
+public import AsymptoticSubspace.LinearGraphBound
+
+@[expose] public section
 
 noncomputable section
 

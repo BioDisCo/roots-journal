@@ -1,7 +1,11 @@
 -- TeX label: lem:convex:zero:hyperplane
 -- A convex set has zero volume iff it is contained in a proper affine subspace.
 
-import AsymptoticSubspace.PaperFormalizationCore
+module
+
+public import AsymptoticSubspace.PaperFormalizationCore
+
+@[expose] public section
 
 noncomputable section
 

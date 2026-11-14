@@ -1,4 +1,8 @@
-import AsymptoticSubspace.StrictCoverGrowth
+module
+
+public import AsymptoticSubspace.StrictCoverGrowth
+
+@[expose] public section
 
 noncomputable section
 
@@ -65,7 +69,7 @@ lemma exists_merge_nodes {G : Round → CommGraph n} {T t : ℕ}
   have hcollision : ∃ a ∈ S.nodes, ∃ b ∈ S.nodes,
       a ≠ b ∧ ∃ p, p ∈ ancestors G a (t - 1) ∧ p ∈ ancestors G b (t - 1) := by
     simpa only [StrictAt, Set.PairwiseDisjoint, Set.Pairwise, Function.onFun,
-      disjoint_left, not_forall, exists_prop, not_not] using hnot
+      disjoint_left, not_forall, exists_prop, not_not, Finset.mem_coe] using hnot
   obtain ⟨a, ha, b, hb, hab, p, hpa, hpb⟩ := hcollision
   let z : TimedProc n := (p, t - 1)
   have hzT : z.2 ≤ T := by have := S.time_le; dsimp [z]; omega
@@ -181,7 +185,7 @@ lemma backwardStep_spec {G : Round → CommGraph n} {T : ℕ} (S : BackwardState
       (backwardStep S).time ≤ S.time ∧
       ((backwardStep S).nodes \ S.nodes).card ≤ 1 ∧
       StrictAt G S.nodes (backwardStep S).time := by
-  simpa only [backwardStep, dif_pos h] using (exists_backward_step S h).choose_spec
+  simpa only [backwardStep, dite_eq_left h] using (exists_backward_step S h).choose_spec
 
 def backwardRun (G : Round → CommGraph n) (T : ℕ) : ℕ → BackwardState G T
   | 0 => initialBackwardState G T

@@ -1,7 +1,11 @@
 -- TeX label: lem:differences
 -- Differences of process outputs decompose into parallel and residual components.
 
-import AsymptoticSubspace.ModelBridgeCore
+module
+
+public import AsymptoticSubspace.ModelBridgeCore
+
+@[expose] public section
 
 noncomputable section
 

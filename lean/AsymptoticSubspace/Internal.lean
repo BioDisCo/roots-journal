@@ -1,8 +1,10 @@
 -- Internal entrypoint: lower-level model and bridge modules used by public results.
-import AsymptoticSubspace.ComputationalModelCore
-import AsymptoticSubspace.ModelBridgeCore
-import AsymptoticSubspace.PaperFormalizationCore
-import AsymptoticSubspace.HalfspaceZoneProofCore
-import AsymptoticSubspace.ImpossibilityProofCore
-import AsymptoticSubspace.LemDeltaContractionCore
-import AsymptoticSubspace.ThmSolvingCore
+module
+
+public import AsymptoticSubspace.ComputationalModelCore
+public import AsymptoticSubspace.ModelBridgeCore
+public import AsymptoticSubspace.PaperFormalizationCore
+public import AsymptoticSubspace.HalfspaceZoneProofCore
+public import AsymptoticSubspace.ImpossibilityProofCore
+public import AsymptoticSubspace.LemDeltaContractionCore
+public import AsymptoticSubspace.ThmSolvingCore

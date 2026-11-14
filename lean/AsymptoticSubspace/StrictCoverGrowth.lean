@@ -1,4 +1,8 @@
-import AsymptoticSubspace.TemporalAncestors
+module
+
+public import AsymptoticSubspace.TemporalAncestors
+
+@[expose] public section
 
 noncomputable section
 

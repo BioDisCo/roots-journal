@@ -1,6 +1,10 @@
-import AsymptoticSubspace.ModelBridgeCore
+module
+
+public import AsymptoticSubspace.ModelBridgeCore
 
 /-! Convex-hull invariance, nestedness, and validity for averaging executions. -/
+
+@[expose] public section
 
 noncomputable section
 

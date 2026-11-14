@@ -1,7 +1,11 @@
-import AsymptoticSubspace.StatefulAlgorithms
-import AsymptoticSubspace.CorBound
-import AsymptoticSubspace.VariableRelaying
-import AsymptoticSubspace.ActualRounds
+module
+
+public import AsymptoticSubspace.StatefulAlgorithms
+public import AsymptoticSubspace.CorBound
+public import AsymptoticSubspace.VariableRelaying
+public import AsymptoticSubspace.ActualRounds
+
+@[expose] public section
 
 noncomputable section
 
@@ -195,7 +199,7 @@ lemma physicalRelay_runState_boundary (B : RelayingSchedule)
     have hinside := physicalRelay_runState_inside B update G init k (x k) ih len hlen
     rw [← ht]
     simp only [StatefulAlgorithm.runState, physicalRelay_step, hinside]
-    rw [if_pos ⟨k, ht⟩, merge_received_floodBuffer, ht,
+    rw [ite_eq_left ⟨k, ht⟩, merge_received_floodBuffer, ht,
       show len + 1 = B.boundary (k + 1) - B.boundary k by dsimp [len]; omega,
       hupdate]
 
@@ -236,8 +240,10 @@ lemma bufferAverage_floodBuffer (G : Round → CommGraph n) (start len : ℕ)
   have horigins : bufferOrigins (floodBuffer G start len x i) =
       inNeighborFinset (graphProduct G start len) i := by
     ext o
+    simp only [bufferOrigins, Finset.mem_filter, Finset.mem_univ, true_and,
+      mem_inNeighborFinset]
     by_cases h : (graphProduct G start len).edge o i <;>
-      simp [bufferOrigins, floodBuffer, h]
+      simp [floodBuffer, h]
   unfold bufferAverage
   rw [horigins]
   apply Finset.sum_congr rfl

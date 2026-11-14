@@ -1,5 +1,9 @@
-import AsymptoticSubspace.ThmRooted
-import AsymptoticSubspace.TemporalAncestors
+module
+
+public import AsymptoticSubspace.ThmRooted
+public import AsymptoticSubspace.TemporalAncestors
+
+@[expose] public section
 
 noncomputable section
 
@@ -18,7 +22,7 @@ lemma graphProduct_isKRooted (G : Round → CommGraph n) (start L k : ℕ) (hL :
     intro p q hpq
     rw [show L = (L - 1) + 1 by omega, graphProduct_succ_left]
     exact ⟨q, hpq, (graphProduct G (start + 1) (L - 1)).self_loop q⟩
-  exact hri.mono hedge
+  exact Relation.ReflTransGen.mono hedge r i hri
 
 /-- Variable block boundaries; strict growth ensures every averaging update
 eventually occurs. A uniform bound on block lengths is not needed for convergence. -/

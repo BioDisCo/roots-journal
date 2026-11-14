@@ -1,8 +1,12 @@
 -- TeX label: lem:continuity
-import AsymptoticSubspace.Thickness
-import Mathlib.Analysis.Normed.Operator.Basic
+module
+
+public import AsymptoticSubspace.Thickness
+public import Mathlib.Analysis.Normed.Operator.Basic
 
 /-! Lemma 18: Lipschitz continuity of thickness. -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -39,7 +43,7 @@ theorem thickness_lipschitz
       (fun P : V →L[ℝ] V => thickness P X) := by
   apply LipschitzWith.of_dist_le_mul
   intro P Q
-  simpa only [Real.dist_eq, dist_eq_norm, Real.coe_toNNReal _ Metric.diam_nonneg,
+  simpa only [Real.dist_eq, dist_eq_norm, Real.norm_eq_abs, Real.coe_toNNReal _ Metric.diam_nonneg,
     mul_comm] using lemma_continuity X hX hne P Q
 
 end AsymptoticSubspace

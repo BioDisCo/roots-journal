@@ -1,6 +1,10 @@
-import AsymptoticSubspace.ModelBridgeCore
-import AsymptoticSubspace.AxialVolumeContraction
-import AsymptoticSubspace.HyperplaneCoordinates
+module
+
+public import AsymptoticSubspace.ModelBridgeCore
+public import AsymptoticSubspace.AxialVolumeContraction
+public import AsymptoticSubspace.HyperplaneCoordinates
+
+@[expose] public section
 
 noncomputable section
 
@@ -98,7 +102,7 @@ lemma volume_real_split (l : V →ₗ[ℝ] ℝ) (hl : l ≠ 0) (p : V)
     apply propext
     exact and_congr_right fun _ => ⟨fun h => lt_of_le_of_ne (le_of_not_gt h) hx,
       fun h => not_lt.mpr h.le⟩
-  have hsplit := measureReal_inter_add_diff (μ := volume)
+  have hsplit := measureReal_inter_add_sdiff (μ := volume)
     (s := P) (t := {x | l p < l x})
     (measurableSet_lt measurable_const l.continuous_of_finiteDimensional.measurable) hP
   rw [measureReal_congr heq] at hsplit

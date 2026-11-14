@@ -1,5 +1,7 @@
-import AsymptoticSubspace.ExternalGraphBound
-import AsymptoticSubspace.ExactDimension
+module
+
+public import AsymptoticSubspace.ExternalGraphBound
+public import AsymptoticSubspace.ExactDimension
 
 /-! The paper numbers communication/update rounds starting at one. Its initial
 round zero has outputs but no communication or averaging weights. These bridges
@@ -19,6 +21,8 @@ space of exactly dimension `k - 1`. `theorem_rooted_exact_actualRounds` gives
 the safe-averaging clause of Corollary 20. Corollary 12 is assembled via the
 volume theorem in `PhysicalRelayRates`.
 -/
+
+@[expose] public section
 
 noncomputable section
 

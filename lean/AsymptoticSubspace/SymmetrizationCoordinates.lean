@@ -1,4 +1,8 @@
-import AsymptoticSubspace.Symmetrization
+module
+
+public import AsymptoticSubspace.Symmetrization
+
+@[expose] public section
 
 noncomputable section
 
@@ -33,6 +37,9 @@ theorem axialCoordinates_measurePreserving (m : ℕ) : MeasurePreserving (axialC
     (PiLp.volume_preserving_toLp (Fin m))
   have h := hprod.comp (hsplit.comp (PiLp.volume_preserving_ofLp (Fin (m + 1))))
   convert h using 1
+  ext z
+  · rfl
+  · simp [axialCoordinates, MeasurableEquiv.piFinSuccAbove, Fin.tail]
 
 /-- The symmetrized body for an arbitrary compact body in standard Euclidean
 coordinates, with the true axial support retained. -/

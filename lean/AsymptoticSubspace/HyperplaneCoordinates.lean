@@ -1,6 +1,10 @@
-import AsymptoticSubspace.SymmetrizationCoordinates
+module
+
+public import AsymptoticSubspace.SymmetrizationCoordinates
 
 /-! Rotation and translation of a specified hyperplane to the first-coordinate plane. -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -31,7 +35,7 @@ lemma exists_axial_isometry {m : ℕ} (hd : Module.finrank ℝ V = m + 1)
   let u := ‖v‖⁻¹ • v
   have hu : ‖u‖ = 1 := by simp [u, norm_smul, norm_inv, norm_ne_zero_iff.mpr hv]
   let w : Fin (m + 1) → V := fun _ => u
-  have hw : Orthonormal ℝ (({0} : Set (Fin (m + 1))).restrict w) := by
+  have hw : Orthonormal ℝ (({0} : Set (Fin (m + 1))).domRestrict w) := by
     refine ⟨fun _ => hu, ?_⟩
     intro i j hij
     exact (hij (Subtype.ext (i.property.trans j.property.symm))).elim

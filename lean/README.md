@@ -1,7 +1,11 @@
 # Lean formalization
 
 The entry point is [AsymptoticSubspace.lean](AsymptoticSubspace.lean).
-The toolchain and Mathlib revision are pinned to v4.27.0. From this directory:
+The toolchain and Mathlib revision are pinned to v4.35.0.
+The repository-level `make check` command downloads the compiled dependencies,
+builds the formalization, and runs the checks described below. Setup information
+is available in the [main README](../README.md#checking-the-formalization).
+With dependencies available, the underlying checks from this directory are:
 
 ```sh
 lake build
@@ -9,7 +13,7 @@ lake env lean CheckAxioms.lean
 ```
 
 The second command checks the axioms of every project theorem and verifies the
-main dependencies of the symmetrization and volume-convergence proofs.
+main dependencies of the volume, projection, and limiting-vertex proofs.
 
 ## Notation and scope
 

@@ -1,4 +1,8 @@
-import AsymptoticSubspace.LemDeltaContractionCore
+module
+
+public import AsymptoticSubspace.LemDeltaContractionCore
+
+@[expose] public section
 
 noncomputable section
 

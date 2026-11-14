@@ -1,6 +1,10 @@
-import Mathlib
+module
+
+public import Mathlib
 
 /-! The simplex-volume formula used in Lemma 11. -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -15,10 +19,10 @@ def coordinateSimplex (n : ℕ) (r : ℝ) : Set (Fin n → ℝ) :=
 
 lemma coordinateSimplex_closed (n : ℕ) (r : ℝ) : IsClosed (coordinateSimplex n r) := by
   have hnonneg : IsClosed {x : Fin n → ℝ | ∀ i, 0 ≤ x i} := by
-    rw [setOf_forall]
+    rw [ofPred_forall]
     exact isClosed_iInter fun i => isClosed_le continuous_const (continuous_apply i)
   exact hnonneg.inter
-    (isClosed_le (continuous_finset_sum _ fun i _ => continuous_apply i) continuous_const)
+    (isClosed_le (continuous_finsetSum _ fun i _ => continuous_apply i) continuous_const)
 
 lemma coordinateSimplex_empty {n : ℕ} {r : ℝ} (hr : r < 0) :
     coordinateSimplex n r = ∅ := by
@@ -31,9 +35,9 @@ lemma coordinateSimplex_cons (n : ℕ) (r x : ℝ) :
     (fun y : Fin n → ℝ => Fin.cons x y) ⁻¹' coordinateSimplex (n + 1) r =
       if 0 ≤ x then coordinateSimplex n (r - x) else ∅ := by
   ext y
-  simp only [mem_preimage, coordinateSimplex, mem_setOf_eq, Fin.forall_fin_succ,
+  simp only [mem_preimage, coordinateSimplex, mem_ofPred_eq, Fin.forall_fin_succ,
     Fin.cons_zero, Fin.cons_succ, Fin.sum_univ_succ]
-  split_ifs <;> simp_all only [mem_setOf_eq, mem_empty_iff_false, false_and, true_and]
+  split_ifs <;> simp_all only [mem_ofPred_eq, mem_empty_iff_false, false_and, true_and]
   constructor <;> rintro ⟨h, hsum⟩ <;> exact ⟨h, by linarith⟩
 
 /-- Repeated slicing gives the factor `1 / n!` for the coordinate simplex. -/
@@ -53,12 +57,12 @@ theorem volume_coordinateSimplex (n : ℕ) {r : ℝ} (hr : 0 ≤ r) :
         (Icc 0 r).indicator (fun x => ENNReal.ofReal ((r - x) ^ n / n.factorial)) x := by
       rw [coordinateSimplex_cons]
       by_cases hx : 0 ≤ x
-      · rw [if_pos hx]
+      · rw [ite_eq_left hx]
         by_cases hxr : x ≤ r
         · rw [indicator_of_mem (show x ∈ Icc 0 r from ⟨hx, hxr⟩), ih (sub_nonneg.mpr hxr)]
         · rw [coordinateSimplex_empty (by linarith), measure_empty,
             indicator_of_notMem (by simpa [hx] using hxr)]
-      · rw [if_neg hx, measure_empty, indicator_of_notMem (by simp [hx])]
+      · rw [ite_eq_right hx, measure_empty, indicator_of_notMem (by simp [hx])]
     have hmeasure : volume (coordinateSimplex (n + 1) r) =
         ∫⁻ x : ℝ, (Icc 0 r).indicator
           (fun x => ENNReal.ofReal ((r - x) ^ n / n.factorial)) x := by
@@ -124,6 +128,8 @@ lemma volume_orthonormal_simplex (o : OrthonormalBasis (Fin n) ℝ V) :
   let e := o.toBasis.equivFunL.symm
   have he : MeasurePreserving e := by
     convert o.measurePreserving_repr_symm.comp (PiLp.volume_preserving_toLp (Fin n)) using 1
+    ext x
+    rfl
   have hmap (i : Fin n) : e (Pi.single i 1) = o i := by
     change o.toBasis.equivFun.symm (Pi.single i 1) = o i
     simp

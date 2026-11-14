@@ -1,9 +1,13 @@
-import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
+module
+
+public import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
 
 /-! Adapted from hojonathanho/isoperimetric, commit
 29768f8beeaf17295cdf3853d37da35d7e2b0a5f, under Apache-2.0.
 Changes: module paths, namespace, and compatibility with the pinned mathlib.
 See THIRD_PARTY.md and LICENSE in this directory. -/
+
+@[expose] public section
 
 namespace AsymptoticSubspace.BrunnMinkowski
 

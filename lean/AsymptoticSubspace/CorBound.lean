@@ -1,7 +1,11 @@
 -- TeX label: cor:bound
-import AsymptoticSubspace.ThmPoss
-import AsymptoticSubspace.ThmRooted
-import AsymptoticSubspace.EqualNeighbor
+module
+
+public import AsymptoticSubspace.ThmPoss
+public import AsymptoticSubspace.ThmRooted
+public import AsymptoticSubspace.EqualNeighbor
+
+@[expose] public section
 
 noncomputable section
 

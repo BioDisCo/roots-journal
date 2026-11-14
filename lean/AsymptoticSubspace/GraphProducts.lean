@@ -1,4 +1,8 @@
-import AsymptoticSubspace.ComputationalModelCore
+module
+
+public import AsymptoticSubspace.ComputationalModelCore
+
+@[expose] public section
 
 noncomputable section
 

@@ -1,7 +1,11 @@
-import AsymptoticSubspace.HalfspaceZoneProofCore
-import AsymptoticSubspace.AveragingHulls
+module
+
+public import AsymptoticSubspace.HalfspaceZoneProofCore
+public import AsymptoticSubspace.AveragingHulls
 
 /-! The supporting-level consequence of half-space attraction used in Lemma 10. -/
+
+@[expose] public section
 
 noncomputable section
 

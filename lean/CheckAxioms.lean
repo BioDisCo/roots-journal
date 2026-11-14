@@ -1,8 +1,93 @@
-import AsymptoticSubspace
+module
+
+-- Proof bodies are needed to check the dependencies below.
+import all AsymptoticSubspace.ActualRoundLemmas
+import all AsymptoticSubspace.ActualRounds
+import all AsymptoticSubspace.AffineDimension
+import all AsymptoticSubspace.AveragingHulls
+import all AsymptoticSubspace.AxialVolumeContraction
+import all AsymptoticSubspace.BackwardCover
+import all AsymptoticSubspace.BlockExecution
+import all AsymptoticSubspace.BrunnMinkowski.Basic
+import all AsymptoticSubspace.BrunnMinkowski.BrunnMinkowski
+import all AsymptoticSubspace.BrunnMinkowski.PrekopaLeindler
+import all AsymptoticSubspace.BrunnMinkowski.Weighted
+import all AsymptoticSubspace.ComputationalModelCore
+import all AsymptoticSubspace.ConcaveProfileIntegrability
+import all AsymptoticSubspace.CorBound
+import all AsymptoticSubspace.CorCharacterization
+import all AsymptoticSubspace.CorRootedVertices
+import all AsymptoticSubspace.DefComputationalModel
+import all AsymptoticSubspace.DefMinimumBroadcastWeight
+import all AsymptoticSubspace.DefThickness
+import all AsymptoticSubspace.EqualNeighbor
+import all AsymptoticSubspace.ExactDimension
+import all AsymptoticSubspace.ExactHyperplane
+import all AsymptoticSubspace.ExternalGraphBound
+import all AsymptoticSubspace.GraphProducts
+import all AsymptoticSubspace.HalfspaceSupport
+import all AsymptoticSubspace.HalfspaceZoneProofCore
+import all AsymptoticSubspace.HyperplaneCoordinates
+import all AsymptoticSubspace.ImpossibilityProofCore
+import all AsymptoticSubspace.LemAccumulationPoint
+import all AsymptoticSubspace.LemConcaveLine
+import all AsymptoticSubspace.LemConcaveLineZero
+import all AsymptoticSubspace.LemContinuity
+import all AsymptoticSubspace.LemContract
+import all AsymptoticSubspace.LemConvexZeroHyperplane
+import all AsymptoticSubspace.LemDeltaContraction
+import all AsymptoticSubspace.LemDeltaContractionCore
+import all AsymptoticSubspace.LemDifferences
+import all AsymptoticSubspace.LemHalfspaceDistFormula
+import all AsymptoticSubspace.LemHalfspaceZone
+import all AsymptoticSubspace.LemVolumes
+import all AsymptoticSubspace.LemXiXip
+import all AsymptoticSubspace.LimitingVerticesCore
+import all AsymptoticSubspace.LinearGraphBound
+import all AsymptoticSubspace.ModelBridgeCore
+import all AsymptoticSubspace.NestedHulls
+import all AsymptoticSubspace.PaperComputationalModel
+import all AsymptoticSubspace.PaperFormalizationCore
+import all AsymptoticSubspace.PhysicalAveraging
+import all AsymptoticSubspace.PhysicalRelayRates
+import all AsymptoticSubspace.PhysicalRelaying
+import all AsymptoticSubspace.SimplexVolume
+import all AsymptoticSubspace.StatefulAlgorithms
+import all AsymptoticSubspace.StrictCoverGrowth
+import all AsymptoticSubspace.StrictRoundCounting
+import all AsymptoticSubspace.StrictRoundWeights
+import all AsymptoticSubspace.SymmetricBody
+import all AsymptoticSubspace.Symmetrization
+import all AsymptoticSubspace.SymmetrizationCoordinates
+import all AsymptoticSubspace.TemporalAncestors
+import all AsymptoticSubspace.Thickness
+import all AsymptoticSubspace.ThmImposs
+import all AsymptoticSubspace.ThmLimitingVertices
+import all AsymptoticSubspace.ThmPoss
+import all AsymptoticSubspace.ThmRooted
+import all AsymptoticSubspace.ThmSolving
+import all AsymptoticSubspace.ThmSolvingCore
+import all AsymptoticSubspace.VariableRelaying
+import all AsymptoticSubspace.VolumeContractionCore
+import all AsymptoticSubspace.VolumeRateCore
 import Lean.Util.CollectAxioms
 
 /-! Check the axioms of all project theorems and the main proof dependencies.
 Run with `lake env lean CheckAxioms.lean` after `lake build`. -/
+
+open Lean in
+/-- Follow project declarations through their types and proof bodies.
+Library declarations are audited by `collectAxioms`, but need not be traversed
+when checking the paper's sequence of project lemmas. -/
+private partial def projectDependencies (env : Environment) (name : Name) :
+    StateM NameSet Unit := do
+  if (← get).contains name then return
+  modify (·.insert name)
+  unless (`AsymptoticSubspace).isPrefixOf (privateToUserName name) do return
+  let some info := env.find? name | return
+  info.type.getUsedConstants.forM (projectDependencies env)
+  if let some value := info.value? (allowOpaque := true) then
+    value.getUsedConstants.forM (projectDependencies env)
 
 open Lean in
 run_cmd do
@@ -12,13 +97,15 @@ run_cmd do
       | .thmInfo _ =>
         if (`AsymptoticSubspace).isPrefixOf (privateToUserName name) then names.push name else names
       | _ => names
-  let (_, state) := ((names.forM CollectAxioms.collect).run env).run {}
+  unless !names.isEmpty do
+    throwError "No project theorems were found"
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
-  let unexpected := state.axioms.filter fun name => !allowed.contains name
-  unless unexpected.isEmpty do
-    throwError "Unexpected axioms: {unexpected}"
+  for name in names do
+    let unexpected := (← collectAxioms name).filter fun ax => !allowed.contains ax
+    unless unexpected.isEmpty do
+      throwError "Unexpected axioms in {name}: {unexpected}"
   logInfo m!"Checked {names.size} project theorems: only propext, Classical.choice, and Quot.sound."
-  let dependencies := fun name => (((CollectAxioms.collect name).run env).run {}).2.visited
+  let dependencies := fun name => (projectDependencies env name).run {} |>.2
   unless (dependencies ``AsymptoticSubspace.thickness_eq_max).contains
       ``AsymptoticSubspace.exists_thickness_eq_norm do
     throwError "Definition 16 does not establish attainment on compact sets"
@@ -33,6 +120,21 @@ run_cmd do
       ``AsymptoticSubspace.thickness_convexHull do
     throwError "The projected-hull diameter does not use convex-hull invariance"
   logInfo "Checked compact-set thickness, its finite computation, and convex-hull invariance."
+  let vertices := dependencies ``AsymptoticSubspace.theorem_limiting_vertices
+  for name in #[``AsymptoticSubspace.LimitingVertices.exists_broadcasting_subsequence,
+      ``AsymptoticSubspace.LimitingVertices.inter_eq_convexHull,
+      ``AsymptoticSubspace.lemma_xi_xip_actualRounds,
+      ``AsymptoticSubspace.LimitingVertices.limit_decomposition,
+      ``AsymptoticSubspace.LimitingVertices.vertex_mem_broadcasting_hull] do
+    unless vertices.contains name do
+      throwError "Theorem 21 does not use the manuscript's vertex argument: {name}"
+  let rootedVertices := dependencies ``AsymptoticSubspace.corollary_rooted_vertices
+  for name in #[``AsymptoticSubspace.theorem_limiting_vertices,
+      ``AsymptoticSubspace.ComputationalModel.blockExecution_safe,
+      ``AsymptoticSubspace.sharpRootedBroadcastBound] do
+    unless rootedVertices.contains name do
+      throwError "Corollary 22 does not use the rooted-to-broadcastable reduction: {name}"
+  logInfo "Checked the subsequence, decomposition, and vertex arguments of Theorem 21 and Corollary 22."
   let contraction := dependencies ``AsymptoticSubspace.lemma_contract_of_le_one
   for name in #[``AsymptoticSubspace.ModelLemmas.lemma_halfspace_zone,
       ``AsymptoticSubspace.PaperFormalization.sectionRadius_concave,

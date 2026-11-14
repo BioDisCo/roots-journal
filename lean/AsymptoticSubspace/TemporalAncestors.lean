@@ -1,4 +1,8 @@
-import AsymptoticSubspace.GraphProducts
+module
+
+public import AsymptoticSubspace.GraphProducts
+
+@[expose] public section
 
 noncomputable section
 

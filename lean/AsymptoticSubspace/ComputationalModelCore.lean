@@ -1,6 +1,10 @@
 -- Internal plumbing module.
 -- Reader-facing statements live in `DefComputationalModel.lean`.
-import Mathlib
+module
+
+public import Mathlib
+
+@[expose] public section
 
 noncomputable section
 

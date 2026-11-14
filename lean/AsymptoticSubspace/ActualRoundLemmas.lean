@@ -1,9 +1,11 @@
-import AsymptoticSubspace.ActualRounds
-import AsymptoticSubspace.LemXiXip
-import AsymptoticSubspace.LemDifferences
-import AsymptoticSubspace.LemHalfspaceZone
-import AsymptoticSubspace.LemContract
-import AsymptoticSubspace.LemDeltaContraction
+module
+
+public import AsymptoticSubspace.ActualRounds
+public import AsymptoticSubspace.LemXiXip
+public import AsymptoticSubspace.LemDifferences
+public import AsymptoticSubspace.LemHalfspaceZone
+public import AsymptoticSubspace.LemContract
+public import AsymptoticSubspace.LemDeltaContraction
 
 /-!
 # Averaging results on positive communication rounds
@@ -17,6 +19,8 @@ Theorem 6 uses volume contraction, compactness of the nested hulls, and
 Lemma 11 to place their intersection in a hyperplane. Lemma 10 uses the
 symmetrization and concave-radius estimates of Section 5.2.
 -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -126,7 +130,7 @@ theorem theorem_poss_exact_actualRounds
   intro ε hε t ht
   rcases ht with hsmall | ht
   · have hfinite : volume (Poly E 0) ≠ ⊤ :=
-      (Set.finite_range (E.outputs 0)).isCompact_convexHull.measure_ne_top
+      ((Set.finite_range (E.outputs 0)).isCompact_convexHull ℝ).measure_ne_top
     have hle : volume (Poly E 0) ≤ ENNReal.ofReal ε := by
       apply (ENNReal.toReal_le_toReal hfinite ENNReal.ofReal_ne_top).mp
       simpa [measureReal_def, ENNReal.toReal_ofReal hε.le] using hsmall

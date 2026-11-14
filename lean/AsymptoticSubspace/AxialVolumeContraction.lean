@@ -1,6 +1,10 @@
-import AsymptoticSubspace.Symmetrization
+module
+
+public import AsymptoticSubspace.Symmetrization
 
 /-! The positive-half volume estimate in Lemma 10, in axial coordinates. -/
+
+@[expose] public section
 
 noncomputable section
 

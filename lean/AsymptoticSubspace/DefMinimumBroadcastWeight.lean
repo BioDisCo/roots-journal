@@ -1,6 +1,10 @@
 -- TeX label: minimum broadcasting weight definition.
 
-import AsymptoticSubspace.DefComputationalModel
+module
+
+public import AsymptoticSubspace.DefComputationalModel
+
+@[expose] public section
 
 namespace AsymptoticSubspace
 

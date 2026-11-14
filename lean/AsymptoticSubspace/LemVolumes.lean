@@ -1,7 +1,11 @@
 -- TeX label: lem:volumes
 -- Volume bounds for concave radial profiles under zero-line approximation.
 
-import AsymptoticSubspace.ConcaveProfileIntegrability
+module
+
+public import AsymptoticSubspace.ConcaveProfileIntegrability
+
+@[expose] public section
 
 noncomputable section
 

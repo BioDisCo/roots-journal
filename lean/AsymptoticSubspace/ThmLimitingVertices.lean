@@ -1,5 +1,7 @@
 -- TeX label: thm:limiting-vertices
-import AsymptoticSubspace.LimitingVerticesCore
+module
+
+public import AsymptoticSubspace.LimitingVerticesCore
 
 /-!
 # Limiting convex hulls under k-broadcastability
@@ -18,6 +20,8 @@ vertex bound, and Hausdorff convergence to the intersection. Vertices are
 represented by `Set.extremePoints`; their finiteness follows from the finite
 convex-hull representation.
 -/
+
+@[expose] public section
 
 noncomputable section
 

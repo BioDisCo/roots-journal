@@ -1,8 +1,12 @@
 -- TeX label: thm:poss
-import AsymptoticSubspace.LemContract
-import AsymptoticSubspace.VolumeRateCore
-import AsymptoticSubspace.NestedHulls
-import AsymptoticSubspace.ExactHyperplane
+module
+
+public import AsymptoticSubspace.LemContract
+public import AsymptoticSubspace.VolumeRateCore
+public import AsymptoticSubspace.NestedHulls
+public import AsymptoticSubspace.ExactHyperplane
+
+@[expose] public section
 
 noncomputable section
 
@@ -39,7 +43,7 @@ theorem volume_geometric_bound
   intro r
   have h := lemma_contract_of_le_one E M α r hα hα1 hmbw (hcard (r + 1))
   have hfin (s : ℕ) : volume (Poly E s) ≠ ⊤ :=
-    (Set.finite_range (E.outputs s)).isCompact_convexHull.measure_ne_top
+    ((Set.finite_range (E.outputs s)).isCompact_convexHull ℝ).measure_ne_top
   have hf : 0 ≤ 1 - α ^ Module.finrank ℝ V := sub_nonneg.mpr (pow_le_one₀ hα.le hα1)
   have hreal := (ENNReal.toReal_le_toReal (hfin (r + 1))
     (ENNReal.mul_ne_top ENNReal.ofReal_ne_top (hfin r))).mpr h
@@ -81,7 +85,8 @@ theorem volume_round_bound
       exact le_of_eq (by ring)
     · simpa using ht
   apply (ENNReal.toReal_le_toReal
-    (Set.finite_range (E.outputs t)).isCompact_convexHull.measure_ne_top ENNReal.ofReal_ne_top).mp
+    ((Set.finite_range (E.outputs t)).isCompact_convexHull ℝ).measure_ne_top
+    ENNReal.ofReal_ne_top).mp
   simpa [measureReal_def, ENNReal.toReal_ofReal hε.le] using hreal
 
 /-- Theorem `thm:poss`: agreement, validity, and the stated volume deadline. -/

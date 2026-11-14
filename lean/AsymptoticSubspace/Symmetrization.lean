@@ -1,5 +1,9 @@
-import AsymptoticSubspace.SymmetricBody
-import AsymptoticSubspace.BrunnMinkowski.Weighted
+module
+
+public import AsymptoticSubspace.SymmetricBody
+public import AsymptoticSubspace.BrunnMinkowski.Weighted
+
+@[expose] public section
 
 noncomputable section
 

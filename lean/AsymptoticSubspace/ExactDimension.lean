@@ -1,5 +1,9 @@
-import AsymptoticSubspace.StatefulAlgorithms
-import AsymptoticSubspace.AffineDimension
+module
+
+public import AsymptoticSubspace.StatefulAlgorithms
+public import AsymptoticSubspace.AffineDimension
+
+@[expose] public section
 
 noncomputable section
 

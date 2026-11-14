@@ -5,16 +5,8 @@
 \usepackage{amsmath,amsthm,amssymb}
 \usepackage{microtype}
 \usepackage[appendix=inline,bibliography=common]{apxproof}
-\usepackage{hyperref}
 
-% Lean badges (verified-badges package)
-\usepackage{graphicx}
-\usepackage{verified-badges}
-\newcommand{\leanurl}[1]{https://github.com/BioDisCo/roots-journal/blob/main/lean/AsymptoticSubspace/#1}
-\newcommand{\suppurl}[1]{https://github.com/BioDisCo/roots-journal/blob/main/manuscript/supplementary_material/#1}
-\usepackage{xcolor}
-\definecolor{suppcolor}{HTML}{1A6496}
-\newcommand{\suppref}[2]{\href{\suppurl{#1}}{\textcolor{suppcolor}{\textbf{#2}}}}
+
 
 
 %
@@ -29,6 +21,17 @@
 \usepackage{algorithm,algorithmic}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
+
+\usepackage{hyperref}
+% Lean badges (verified-badges package)
+\usepackage{graphicx}
+\usepackage{verified-badges}
+\newcommand{\leanurl}[1]{https://github.com/BioDisCo/roots-journal/blob/main/lean/AsymptoticSubspace/#1}
+\newcommand{\suppurl}[1]{https://github.com/BioDisCo/roots-journal/blob/main/manuscript/supplementary_material/#1}
+\usepackage{xcolor}
+\definecolor{suppcolor}{HTML}{1A6496}
+\newcommand{\suppref}[2]{\href{\suppurl{#1}}{\textcolor{suppcolor}{\textbf{#2}}}}
+\pdfstringdefDisableCommands{\def\leanformalized#1{}}
 
 
 
@@ -154,6 +157,12 @@
 
 \maketitle
 
+\begingroup
+\renewcommand{\thefootnote}{}
+\footnotetext[0]{An earlier version of this paper appeared in the proceedings of
+SAND 2026~\cite{fugger_et_al:LIPIcs.SAND.2026.10}.}
+\endgroup
+
 \begin{abstract}
 	We introduce the problem of asymptotic subspace consensus, which requires the outputs of processes to converge onto a common subspace and onto the convex hull of initial vectors.
 	This is a relaxation of asymptotic consensus in which outputs have to converge to a single point, i.e., a zero-dimensional affine subspace.
@@ -264,12 +273,10 @@ Finally, in Section~\ref{sec:simplex}, we strengthen the dimension bound by show
 
 We conclude in Section~\ref{sec:conclusion}.
 
-All named mathematical results have machine-checked counterparts in the Lean~4 proof assistant~\cite{lean4} using the Mathlib library, including the symmetrization construction and the cited graph-product bound.
-Results marked with \leanproof{} have complete machine-checked proofs; \leanformalized{} marks formalized definitions, not outstanding proof obligations.
-The proofs use only Lean's standard foundational axioms and contain no admitted proof obligations.
+All named mathematical results have counterparts in the Lean~4 proof assistant~\cite{lean4} using the Mathlib library: \leanproof{} links to complete machine-checked proofs and \leanformalized{} to formalized definitions.
+The proofs use only Lean's standard foundational axioms.
 The Lean formalizations and proofs were generated with the assistance of Claude Opus~5 and GPT-6.
 These formalizations serve as supplementary information and are not meant as replacements for the natural-language proofs in this paper.
-Clicking a badge links to the corresponding Lean source code.
 
 \begin{figure}[hpt]
 	\centering
@@ -360,6 +367,8 @@ A short argument for a polynomial bound is as follows:
 
 %\begin{proof}
 Let $t \geq n^{k+1}$ and let $G_1,\dots,G_t$ be $k$-rooted.
+If $k\geq n$, every communication graph is already $k$-broadcastable, with broadcasting set $[n]$.
+We may therefore assume $1\leq k<n$ and extend a root set of each graph to a set of exactly $k$ processes.
 By the pigeonhole principle, there exists a subsequence $G_1',\dots,G_s'$ of at least
 $s \geq n^{k+1}/\binom{n}{k}\geq n^{k+1}/n^k = n$ communication graphs in which~$M$ is a root set.
 By considering the influence sets
@@ -374,7 +383,7 @@ In particular this means that~$M$ is a broadcasting set in the product graph $G 
 
 A more involved analysis by El-Hayek, Henzinger, and Schmid~\cite{el2023asymptotically} shows that indeed a bound linear in $n$, and independent of $k$, holds.
 
-\begin{theorem}[{\cite[Theorem 32]{{el2023asymptotically}}}\leanproof{\leanurl{PhysicalRelayRates.lean\#L26-L31}}]\label{thm:rooted:to:broadcastable}
+\begin{theorem}[{\cite[Theorem 32]{{el2023asymptotically}}}\leanproof{\leanurl{PhysicalRelayRates.lean\#L30-L35}}]\label{thm:rooted:to:broadcastable}
 	Any product of at least~$\frac{\pi^2+6}{6}n + 1$ communication graphs that are $k$-rooted is
 	$k$-broadcastable.
 \end{theorem}
@@ -420,7 +429,7 @@ We first show a lower bound on the attainable dimensionality reduction in asympt
 The proof is a generalization of the impossibility of asymptotic consensus in non-rooted oblivious message adversaries \cite{CBFN15:icalp}.
 It does not rely on the dynamics of the communication network and requires a single static communication graph only, where sufficiently many groups of processes receive no influence from outside their group and their outputs converge to their respective common initial values.
 
-\begin{theoremrep}[\leanproof{\leanurl{PaperComputationalModel.lean\#L50-L61}}]\label{lem:imposs}
+\begin{theoremrep}[\leanproof{\leanurl{PaperComputationalModel.lean\#L54-L65}}]\label{lem:imposs}
 	For $d > s \geq 0$, the $d$-to-$s$-dimensional asymptotic subspace consensus problem is unsolvable in oblivious message adversaries that are not $(s+1)$-rooted.
 \end{theoremrep}
 \begin{proof}
@@ -485,7 +494,7 @@ For example, the equal neighbor algorithm is $1/n$-safe.
 We next define a property for averaging algorithms executed in $k$-broadcastable oblivious message adversaries for some $k \geq 1$.
 The property will be central in quantifying the influence a broadcasting set has on the other processes.
 
-\begin{definition}[Minimum broadcasting weight\leanformalized{\leanurl{ActualRounds.lean\#L146-L149}}]
+\begin{definition}[Minimum broadcasting weight\leanformalized{\leanurl{ActualRounds.lean\#L150-L153}}]
 	Let round $t \geq 1$, graph $G_t$ be $k$-broadcastable for some $k \geq 1$, and $M(t)$ be the broadcasting set in $G_t$.
 	For an averaging algorithm, an update step $x_i(t) = \sum_{j \in [n]} w_{ij}(t) x_j(t-1)$ has minimum broadcasting weight $\alpha$ if $\sum_{j \in M(t)} w_{ij}(t) \geq \alpha$.
 	An averaging algorithm has minimum broadcasting weight $\alpha$ if all update steps do.
@@ -574,7 +583,7 @@ In fact one can say more for executions in oblivious message adversaries that ar
 This is due to them being attracted by the values of the broadcasting set.
 The following lemma establishes a lower bound on this distance (Figure~\ref{fig:panel_2}a).
 
-\begin{lemmarep}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L62-L71}}]\label{lem:halfspace:zone}
+\begin{lemmarep}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L66-L75}}]\label{lem:halfspace:zone}
 	Consider an averaging algorithm executed in some $k$-broadcastable oblivious message adversary with minimum broadcasting weight $\alpha > 0$ and fix a round $t \geq 1$.
 	Let $H \subseteq \IR^d$ be an open half-space such that $X(t-1) \cap H = \emptyset$.
 	Then $\dist(X(t), H) \geq \alpha \dist(P_{M(t)}(t-1), H)$.
@@ -634,14 +643,14 @@ The following lemma establishes a lower bound on this distance (Figure~\ref{fig:
 As a first main result, we show that being $d$-broadcastable is enough for a message adversary to reduce the dimensionality of process values in $\IR^d$.
 We also establish a rate for the contraction to a lower dimension.
 
-\begin{theorem}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L108-L134}}]\label{thm:poss}
+\begin{theorem}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L112-L138}}]\label{thm:poss}
 	Let dimension $d \geq 1$.
 	Every averaging algorithm with minimum broadcasting weight $\alpha > 0$ solves $d$-to-$(d-1)$-dimensional asymptotic subspace consensus in a $d$-broadcastable oblivious message adversary.
 	Moreover, for every $\varepsilon>0$, we have $\vol(P(t)) \leq \varepsilon$ for all $t\geq 0$ if $\vol(P(0))\leq\varepsilon$, and otherwise whenever $t \geq \alpha^{-d} \log \frac{\vol(P(0))}{\varepsilon}$.
 \end{theorem}
 
 The remainder of the section is devoted to the proof of the theorem: we show that the $d$-dimensional volume containing the process values converges to $0$.
-It follows that the process values lie within a subspace of lower dimension.
+It follows that the process values converge onto an affine subspace of lower dimension.
 The proof also establishes a contraction rate towards zero volume.
 An outline of the proof strategy is given in Figure~\ref{fig:panel_2}.
 
@@ -763,7 +772,7 @@ We will actually only need a weaker linear bound (Figure~\ref{fig:panel_2}c) for
 This linear bound allows us to show that any $\alpha$-quantile of a symmetric
 body on the first axis (red in Figure~\ref{fig:panel_2}d) contains a non-negligible portion of the total volume.
 
-\begin{lemmarep}[\leanproof{\leanurl{SymmetricBody.lean\#L164-L203}}]\label{lem:volumes}
+\begin{lemmarep}[\leanproof{\leanurl{SymmetricBody.lean\#L168-L207}}]\label{lem:volumes}
 	Let $d\geq 2$, let $h>0$, let $\alpha \in (0,1)$, and let $r:\IR \to [0,\infty)$ be a measurable function that is concave in $[0,h]$.
 	Define the two restricted bodies by
 	\[
@@ -836,7 +845,7 @@ By construction, the cuts $P(t) \cap H_x$ and $\Sym_I(r) \cap H_x$ have the same
 Crucial in the proof is showing that the function $r$ is concave, so that Lemmas~\ref{lem:concave:line} and~\ref{lem:concave:line:zero} can be applied to lower bound the volume shaped off the symmetric body.
 
 
-\begin{lemma}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L76-L88}}]\label{lem:contract}
+\begin{lemma}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L80-L92}}]\label{lem:contract}
 	Let $d\geq 1$ and let the averaging algorithm have minimum broadcasting weight $\alpha>0$.
 	If for round $t \geq 1$, broadcasting set~$M(t)$ fulfills $\lvert M(t)\rvert \leq d$,
 	then
@@ -1050,7 +1059,7 @@ The relayed algorithm is \emph{$\alpha$-safe} if every received origin has weigh
 
 Theorem~\ref{thm:rooted:to:broadcastable} and Theorem~\ref{thm:poss} yield the following consequence.
 
-\begin{corollary}[\leanproof{\leanurl{PhysicalRelayRates.lean\#L69-L139}}]\label{cor:bound}
+\begin{corollary}[\leanproof{\leanurl{PhysicalRelayRates.lean\#L73-L143}}]\label{cor:bound}
 	Let $d\geq 1$, $0<\alpha<1$, and
 	\[
 		L=\left\lceil\frac{\pi^2+6}{6}n+1\right\rceil.
@@ -1081,7 +1090,7 @@ Thus, for $0<\varepsilon<\vol(P(0))$, we have $\vol(P(t))\leq\varepsilon$ whenev
 Theorem~\ref{thm:poss} showed a contraction to lower dimensionality than the initial dimensionality~$d$.
 In this section we show that the dimensionality reduction indeed matches the lower bound in Section~\ref{sec:problem}:
 
-\begin{theorem}[\leanproof{\leanurl{ActualRounds.lean\#L318-L330}}]\label{thm:solving}
+\begin{theorem}[\leanproof{\leanurl{ActualRounds.lean\#L322-L334}}]\label{thm:solving}
 	Let $d \geq k \geq 1$.
 	Every averaging algorithm with minimum broadcasting weight $\alpha > 0$ solves $d$-to-$(k-1)$-dimensional asymptotic subspace consensus in a $k$-broadcastable oblivious message adversary.
 \end{theorem}
@@ -1090,8 +1099,8 @@ In this section we show that the dimensionality reduction indeed matches the low
 	\centering
 	\includegraphics[width=\linewidth]{panel_3.pdf}
 	\caption{\textbf{Thickness $\Delta$ with respect to projection.} \textbf{a} Points $X \subseteq \IR^d$ (in blue) are projected orthogonally via $\Pi$ (dashed). The thickness is the diameter (green) of the projected image.
-		\textbf{b} Same as in \textbf{a}, for the case $X = X(t-1)$ and $\Pi$ is chosen as $\Pi_t$, i.e., in parallel to the direction ($\vec{d}$) of the outputs in round $t-1$ of those processes in the broadcasting $M(t)$.
-		Here, $|M(t)| = 2$ processes, with outputs in red).}
+		\textbf{b} Same as in \textbf{a}, for the case $X = X(t-1)$ and $\Pi=\Pi_t$, the orthogonal projection onto the complement of the direction space of the broadcasting outputs at time $t-1$.
+		Here, $|M(t)| = 2$, their outputs are shown in red, and $\vec{d}$ spans their direction space.}
 	\label{fig:panel_3}
 \end{figure}
 
@@ -1106,7 +1115,7 @@ We then show (Lemmas~\ref{lem:accumulation_point} and~\ref{lem:continuity}) that
 We start with the decomposition of node values into convex combinations of values from the broadcasting set
 and all node values.
 
-\begin{lemmarep}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L29-L37}}]\label{lem:xi_xip}
+\begin{lemmarep}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L33-L41}}]\label{lem:xi_xip}
 	Assume an averaging algorithm with minimum broadcasting weight $\alpha > 0$.
 	For any $i \in [n]$ and round $t \geq 1$, there exist points $\xi(t-1) \in P_{M(t)}(t-1)$  and $\xi'(t-1) \in P(t-1)$, such that
 	$
@@ -1162,7 +1171,7 @@ of $X$, i.e., the set of vectors $v \in \IR^d$ that are orthogonal ($\bra v, v' 
 
 Using the decomposition for two node values in Lemma~\ref{lem:xi_xip}, we can also decompose their difference as shown in the following lemma.
 
-\begin{lemma}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L42-L58}}]\label{lem:differences}
+\begin{lemma}[\leanproof{\leanurl{ActualRoundLemmas.lean\#L46-L62}}]\label{lem:differences}
 	Assume an algorithm with minimum broadcasting weight $\alpha > 0$.
 	For any $i,j \in [n]$ and $t \geq 1$, if the broadcasting set fulfills $|M(t)| \geq 1$, there exists a vector $u_{\parallel}(t-1) \in \dir(X_{M(t)}(t-1))$, and a residual vector $u_\text{res}(t-1) \in \{x-y \mid x,y \in P(t-1)\}$, such that
 	$
@@ -1174,7 +1183,7 @@ Using the decomposition for two node values in Lemma~\ref{lem:xi_xip}, we can al
 	application of Lemma~\ref{lem:xi_xip} to both points in the difference $x_i(t)-x_j(t)$.
 \end{proof}
 
-\begin{definition}[Projection $\Pi_t$ and Thickness $\Delta$\leanformalized{\leanurl{DefThickness.lean\#L26-L49}}]\label{def:thickness}
+\begin{definition}[Projection $\Pi_t$ and Thickness $\Delta$\leanformalized{\leanurl{DefThickness.lean\#L30-L53}}]\label{def:thickness}
 	Consider an averaging algorithm with process values in $\IR^d$.
 	For a round $t\ge 1$ with broadcasting set $M(t) \neq \emptyset$ let
 	$
@@ -1227,7 +1236,7 @@ The thickness furthermore depends continuously on the projection.
 \end{proof}
 
 
-\begin{lemma}[Contraction of thickness\leanproof{\leanurl{ActualRoundLemmas.lean\#L92-L104}}]
+\begin{lemma}[Contraction of thickness\leanproof{\leanurl{ActualRoundLemmas.lean\#L96-L108}}]
 	\label{lem:Delta-contraction}
 	Let $k \geq 1$.
 	Assume an averaging algorithm executed in a $k$-broadcastable oblivious message adversary with minimum broadcasting weight $\alpha>0$.
@@ -1371,7 +1380,7 @@ The thickness furthermore depends continuously on the projection.
 
 From Theorem~\ref{thm:solving}, the reduction of message adversaries in Theorem~\ref{thm:rooted:to:broadcastable}, and the lower bound in Theorem~\ref{lem:imposs}, one finally obtains a complete characterization in oblivious message adversaries:
 
-\begin{corollary}[Characterization of Asymptotic Subspace Consensus\leanproof{\leanurl{PaperComputationalModel.lean\#L40-L78}}]
+\begin{corollary}[Characterization of Asymptotic Subspace Consensus\leanproof{\leanurl{PaperComputationalModel.lean\#L44-L82}}]
 	Let $0\leq s<d$.
 	The $d$-to-$s$-dimensional asymptotic subspace consensus problem is solvable in an oblivious message adversary $\N$ if and only if $\N$ is $(s+1)$-rooted.
 	In that case, every $\alpha$-safe averaging algorithm with $\alpha>0$ solves the problem.
@@ -1382,10 +1391,10 @@ From Theorem~\ref{thm:solving}, the reduction of message adversaries in Theorem~
 \label{sec:simplex}
 
 Having established that $(s + 1)$-rootedness allows $\alpha$-safe averaging
-  algorithm to contract the dimensionality to $s$, one may wonder if we can
-  say more about the result of this dynamics.
-While individual process values need not converge, as seen at the example of a line segment
-  spanned by two process values and a third process whose values oscillates forever
+  algorithms to contract the dimensionality to $s$, one may wonder if we can
+  say more about the result of these dynamics.
+While individual process values need not converge, as seen in the example of a line segment
+  spanned by two process values and a third process whose values oscillate forever
   between the two endpoints via respective $2$-rooted graphs,
   the convex hull $P(t)$ of the process values indeed converges to a
   limit polyhedron $P^* = \bigcap_{t \geq 0} P(t)$ of a simple structure:
@@ -1564,12 +1573,7 @@ Every $\alpha$-safe averaging algorithm with $\alpha > 0$ executed in a
 with at most $k$ vertices.
 \end{corollary}
 \begin{proof}
-Let
-\[
-	L = \left\lceil
-	      \frac{\pi^2+6}{6}n+1
-		\right\rceil.
-\]
+Let $L=\lceil\frac{\pi^2+6}{6}n+1\rceil$.
 By Theorem~\ref{thm:rooted:to:broadcastable}, every product of $L$ consecutive
   communication graphs is $k$-broadcastable.
 Grouping the averaging rounds into blocks of length $L$ gives an averaging
@@ -1597,7 +1601,7 @@ This allows one to lower bound the volume that is shaped off the body by contrac
 on the rate of collapse to a lower-than-initial dimension, measured by the decay of the volume.
 
 We then extend this analysis to a complete characterization of when a contraction to a subspace of dimension $s < d$ can be achieved, showing that this is precisely the case if the oblivious message adversary is $(s+1)$-rooted.
-Moreover, simple averaging algorithms are shown to be solution to this problem.
+Moreover, simple averaging algorithms are shown to solve this problem.
 This shows that averaging algorithms degrade gracefully in (periods of) non-1-rooted message adversaries and that averaging algorithms are
 also effective if convergence to a single point is not necessary.
 

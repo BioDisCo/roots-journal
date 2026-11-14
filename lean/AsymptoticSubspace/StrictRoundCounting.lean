@@ -1,5 +1,9 @@
-import AsymptoticSubspace.BackwardCover
-import AsymptoticSubspace.StrictRoundWeights
+module
+
+public import AsymptoticSubspace.BackwardCover
+public import AsymptoticSubspace.StrictRoundWeights
+
+@[expose] public section
 
 noncomputable section
 

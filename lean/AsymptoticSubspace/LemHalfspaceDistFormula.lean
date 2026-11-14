@@ -1,9 +1,13 @@
 -- TeX label: lem:halfspace:distance:formula
 -- The distance from a point z to an open half-space {h | ⟨h - q, v⟩ < 0} equals ⟨z - q, v⟩ / ‖v‖.
 
-import AsymptoticSubspace.PaperFormalizationCore
+module
+
+public import AsymptoticSubspace.PaperFormalizationCore
 
 /-! Lemma 4: distance to an open half-space. -/
+
+@[expose] public section
 
 noncomputable section
 

@@ -1,6 +1,10 @@
 -- Internal plumbing module.
 -- Reader-facing statements live in `Lem*` and `Thm*` files.
-import AsymptoticSubspace.SimplexVolume
+module
+
+public import AsymptoticSubspace.SimplexVolume
+
+@[expose] public section
 
 noncomputable section
 
@@ -309,7 +313,7 @@ theorem lemma_imposs_complete
       (Set.range xLim) ⊆ (E : Set V) := by
   intro hE
   rcases hE with ⟨E, hfdim, hdim, hsubset⟩
-  letI : FiniteDimensional ℝ E.direction := hfdim
+  let : FiniteDimensional ℝ E.direction := hfdim
   have hspan_le : affineSpan ℝ (Set.range xLim) ≤ E := affineSpan_le.mpr hsubset
   have hdir_le : vectorSpan ℝ (Set.range xLim) ≤ E.direction := by
     have hdir_le' : (affineSpan ℝ (Set.range xLim)).direction ≤ E.direction :=
@@ -447,8 +451,8 @@ theorem lemma_convex_zero_hyperplane
       obtain ⟨s, hsC, b, hb⟩ := AffineBasis.exists_affine_subbasis hSpanTop
       let p : s := Classical.choice b.nonempty
       let edges := b.basisOf p
-      letI : Finite {j : s // j ≠ p} := Module.Finite.finite_basis edges
-      letI := Fintype.ofFinite {j : s // j ≠ p}
+      let : Finite {j : s // j ≠ p} := Module.Finite.finite_basis edges
+      let := Fintype.ofFinite {j : s // j ≠ p}
       let e : {j : s // j ≠ p} ≃ Fin (Module.finrank ℝ V) :=
         Fintype.equivOfCardEq (by rw [Fintype.card_fin, Module.finrank_eq_card_basis edges])
       let v := edges.reindex e
@@ -503,7 +507,7 @@ theorem lemma_accumulation_point
     simpa [IsSelfAdjoint] using
       (isClosed_eq (continuous_id.star) continuous_id)
   have hclosedS : IsClosed S := by
-    simpa [S, orthogonalProjections, isStarProjection_iff, Set.setOf_and] using
+    simpa [S, orthogonalProjections, isStarProjection_iff, Set.ofPred_and] using
       hclosed_idem.inter hclosed_selfAdj
   have hsubset_ball : S ⊆ Metric.closedBall (0 : V →L[ℝ] V) 1 := by
     intro P hP

@@ -1,6 +1,10 @@
-import AsymptoticSubspace.VolumeContractionCore
-import AsymptoticSubspace.AveragingHulls
-import AsymptoticSubspace.HalfspaceSupport
+module
+
+public import AsymptoticSubspace.VolumeContractionCore
+public import AsymptoticSubspace.AveragingHulls
+public import AsymptoticSubspace.HalfspaceSupport
+
+@[expose] public section
 
 noncomputable section
 
@@ -37,7 +41,7 @@ theorem lemma_contract_of_le_one
   classical
   let i : Proc n := ⟨0, Nat.pos_of_ne_zero (NeZero.ne n)⟩
   obtain ⟨j, hj, _⟩ := hmbw.1 (t + 1) i
-  letI : Nonempty (M (t + 1)) := ⟨⟨j, hj⟩⟩
+  let : Nonempty (M (t + 1)) := ⟨⟨j, hj⟩⟩
   let xs : M (t + 1) → V := fun j => E.outputs t j.1
   let p := E.outputs t j
   have hspan : vectorSpan ℝ (Set.range xs) < ⊤ := by
@@ -55,9 +59,9 @@ theorem lemma_contract_of_le_one
       vsub_mem_vectorSpan (k := ℝ) ⟨⟨q, hq⟩, rfl⟩ ⟨⟨j, hj⟩, rfl⟩
     have hzero := hker hv
     simpa [LinearMap.mem_ker, map_sub, sub_eq_zero] using hzero
-  have hPc : IsCompact (Poly E t) := (Set.finite_range (E.outputs t)).isCompact_convexHull
+  have hPc : IsCompact (Poly E t) := (Set.finite_range (E.outputs t)).isCompact_convexHull ℝ
   have hQc : IsCompact (Poly E (t + 1)) :=
-    (Set.finite_range (E.outputs (t + 1))).isCompact_convexHull
+    (Set.finite_range (E.outputs (t + 1))).isCompact_convexHull ℝ
   have hp : p ∈ Poly E t := subset_convexHull ℝ _ ⟨j, rfl⟩
   obtain ⟨a, ha, hmin⟩ := hPc.exists_isMinOn ⟨p, hp⟩ l.continuous_of_finiteDimensional.continuousOn
   obtain ⟨b, hb, hmax⟩ := hPc.exists_isMaxOn ⟨p, hp⟩ l.continuous_of_finiteDimensional.continuousOn

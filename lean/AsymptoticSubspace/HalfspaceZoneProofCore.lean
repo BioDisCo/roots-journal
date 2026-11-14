@@ -1,6 +1,10 @@
 -- Internal plumbing module.
 -- Reader-facing statement is in `LemHalfspaceZone.lean`.
-import AsymptoticSubspace.ModelBridgeCore
+module
+
+public import AsymptoticSubspace.ModelBridgeCore
+
+@[expose] public section
 
 noncomputable section
 
@@ -164,7 +168,7 @@ theorem lemma_halfspace_zone
         rcases hy with ⟨x, hx, rfl⟩
         rcases hx with ⟨i, rfl⟩
         exact hpointwise i
-    · letI : IsEmpty (Proc n) := not_nonempty_iff.mp hproc
+    · let : IsEmpty (Proc n) := not_nonempty_iff.mp hproc
       have hMempty : M (t + 1) = ∅ := by
         ext j
         exact False.elim (isEmptyElim j)

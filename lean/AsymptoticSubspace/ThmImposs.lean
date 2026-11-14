@@ -2,7 +2,11 @@
 -- If the adversary is not (s+1)-rooted and dim(V) > s, then no local deterministic
 -- algorithm can solve asymptotic subspace consensus.
 
-import AsymptoticSubspace.ImpossibilityProofCore
+module
+
+public import AsymptoticSubspace.ImpossibilityProofCore
+
+@[expose] public section
 
 noncomputable section
 

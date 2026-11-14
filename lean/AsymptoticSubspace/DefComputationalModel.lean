@@ -1,7 +1,11 @@
 -- Formalization of the computational model (Section 2).
 -- TeX label: sec:model
 
-import AsymptoticSubspace.ComputationalModelCore
+module
+
+public import AsymptoticSubspace.ComputationalModelCore
+
+@[expose] public section
 
 namespace AsymptoticSubspace
 

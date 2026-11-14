@@ -1,11 +1,15 @@
-import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+module
 
-import AsymptoticSubspace.BrunnMinkowski.Basic
+public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+
+public import AsymptoticSubspace.BrunnMinkowski.Basic
 
 /-! Adapted from hojonathanho/isoperimetric, commit
 29768f8beeaf17295cdf3853d37da35d7e2b0a5f, under Apache-2.0.
 Changes: module paths, namespace, and compatibility with the pinned mathlib.
 See THIRD_PARTY.md and LICENSE in this directory. -/
+
+@[expose] public section
 
 namespace AsymptoticSubspace.BrunnMinkowski
 
@@ -144,7 +148,7 @@ lemma vol_superlevelset_measurable (f : ℝ → ENNReal)
   apply Antitone.measurable
   intro a b hab
   apply measure_mono
-  simp only [setOf_subset_setOf]
+  simp only [ofPred_subset_ofPred]
   intro z hz
   calc
     ENNReal.ofReal a ≤ ENNReal.ofReal b := ENNReal.ofReal_le_ofReal hab
@@ -249,7 +253,7 @@ lemma prekopa_leindler_1d_normalized
     intro t ht
     rw [add_subset_iff]
     intro x hx y hy
-    simp only [mem_setOf_eq] at hx hy ⊢
+    simp only [mem_ofPred_eq] at hx hy ⊢
     calc
       ENNReal.ofReal t = (ENNReal.ofReal t) ^ (1 - θ) * (ENNReal.ofReal t) ^ θ := by
         rw [← ENNReal.rpow_add (1-θ) θ (ne_of_gt (ENNReal.ofReal_pos.mpr ht)) ENNReal.ofReal_ne_top]
@@ -271,11 +275,11 @@ lemma prekopa_leindler_1d_normalized
         : {x | ENNReal.ofReal t ≤ f x}.Nonempty := by
       apply nonempty_def.mpr
       suffices ∃ x, x ∈ {x | ENNReal.ofReal t < f x} by
-        simp only [mem_setOf_eq] at this ⊢
+        simp only [mem_ofPred_eq] at this ⊢
         rcases this with ⟨x, hx⟩
         use x
         exact le_of_lt hx
-      simp only [mem_setOf_eq]
+      simp only [mem_ofPred_eq]
       apply exists_lt_of_lt_ciSup
       simp only [hf_sup1, ENNReal.ofReal_lt_one, ht.2]
     exact brunn_minkowski_1d
@@ -292,11 +296,8 @@ lemma prekopa_leindler_1d_normalized
       rw [lintegral_add_left (vol_superlevelset_measurable f)]
     _ ≤ ∫⁻ t in Ioo 0 1, vh t := by
       apply lintegral_mono_ae
-      rw [ae_restrict_iff (measurableSet_le
-        (Measurable.add (vol_superlevelset_measurable f) (vol_superlevelset_measurable g))
-        (vol_superlevelset_measurable h))]
-      filter_upwards
-      exact h_vol_ineq
+      filter_upwards [ae_restrict_mem measurableSet_Ioo] with t ht
+      exact h_vol_ineq t ht
     _ ≤ ∫⁻ t in Ioi 0, vh t := by apply lintegral_mono_set; grind
 
   -- "layer cake" formulas
@@ -518,9 +519,8 @@ lemma prekopa_leindler_1d {θ : ℝ} {f g h : ℝ → ENNReal}
 
 lemma lintegral_fin1 (F : (Fin 1 → ℝ) → ENNReal) :
     ∫⁻ v : (Fin 1 → ℝ), F v = ∫⁻ x : ℝ, F (fun _ ↦ x) := by
-  rw [← (volume_preserving_funUnique (Fin 1) ℝ).symm.map_eq,
-      lintegral_map_equiv (g := (MeasurableEquiv.funUnique (Fin 1) ℝ).symm)]
-  rfl
+  exact (volume_preserving_funUnique (Fin 1) ℝ).symm.lintegral_map_equiv F
+    (MeasurableEquiv.funUnique (Fin 1) ℝ).symm
 
 -- Append to the end of a vector
 def append {d : ℕ} (x : Fin d → ℝ) (t : Fin 1 → ℝ) : Fin (d + 1) → ℝ :=
@@ -529,7 +529,7 @@ def append {d : ℕ} (x : Fin d → ℝ) (t : Fin 1 → ℝ) : Fin (d + 1) → �
 @[fun_prop]
 lemma append_measurable {d : ℕ} (x : Fin d → ℝ) : Measurable (append x) := by
   unfold append
-  apply measurable_pi_lambda
+  apply Measurable.of_eval
   intro
   split
   · fun_prop
@@ -538,7 +538,7 @@ lemma append_measurable {d : ℕ} (x : Fin d → ℝ) : Measurable (append x) :=
 @[fun_prop]
 lemma append_measurable' {d : ℕ} (t : Fin 1 → ℝ) : Measurable (fun x : Fin d → ℝ ↦ append x t) := by
   unfold append
-  apply measurable_pi_lambda
+  apply Measurable.of_eval
   intro
   split
   · fun_prop
@@ -575,8 +575,8 @@ lemma lintegral_fix_eq_lmarginal {d : ℕ}
   simp_all only [Pi.default_def, eq_rec_constant, Fin.default_eq_zero, Fin.isValue, dite_eq_ite,
     Function.comp_apply]
   congr; ext; congr; ext i; split
-  case e_f.h.e_a.h.isTrue => simp_all
-  case e_f.h.e_a.h.isFalse h => simp [Fin.val_lt_last h]
+  case e_f.isTrue => simp_all
+  case e_f.isFalse h => simp [Fin.val_lt_last h]
 
 lemma lintegral_fix_lintegral_eq_lintegral
     {d : ℕ} {f : (Fin (d + 2) → ℝ) → ENNReal} (hf_measurable : Measurable f) :
@@ -681,21 +681,14 @@ theorem prekopa_leindler
   -- Apply the inductive hypothesis to F, G, H
   have hF_measurable : Measurable F := by
     rw [h_F_eq_F']; unfold F'
-    apply Measurable.comp'
-    · apply Measurable.lmarginal; exact hf_measurable
-    fun_prop
+    exact (hf_measurable.lmarginal (fun _ ↦ volume)).comp (by fun_prop)
   have hG_measurable : Measurable G := by
     rw [h_G_eq_G']; unfold G'
-    apply Measurable.comp'
-    · apply Measurable.lmarginal; exact hg_measurable
-    fun_prop
+    exact (hg_measurable.lmarginal (fun _ ↦ volume)).comp (by fun_prop)
   have hH_measurable : Measurable H := by
     rw [h_H_eq_H']; unfold H'
-    apply Measurable.comp'
-    · fun_prop
-    apply Measurable.comp'
-    · apply Measurable.lmarginal; exact hh_measurable
-    fun_prop
+    exact measurable_const.mul
+      ((hh_measurable.lmarginal (fun _ ↦ volume)).comp (by fun_prop))
   have factor_pos : 0 < (1-θ)^(1-θ)*θ^θ :=
     mul_pos (Real.rpow_pos_of_pos (by linarith) (1-θ)) (Real.rpow_pos_of_pos (by linarith) θ)
   have fix_plconditions : ∀ x1 y1 : Fin (d + 1) → ℝ,

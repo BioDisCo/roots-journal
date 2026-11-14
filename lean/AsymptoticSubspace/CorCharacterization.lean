@@ -1,7 +1,11 @@
 -- Final corollary: Characterization of Asymptotic Subspace Consensus.
-import AsymptoticSubspace.ThmRooted
-import AsymptoticSubspace.EqualNeighbor
-import AsymptoticSubspace.ThmImposs
+module
+
+public import AsymptoticSubspace.ThmRooted
+public import AsymptoticSubspace.EqualNeighbor
+public import AsymptoticSubspace.ThmImposs
+
+@[expose] public section
 
 noncomputable section
 

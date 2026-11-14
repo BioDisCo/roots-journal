@@ -1,45 +1,47 @@
 -- Public entrypoint: paper-facing definitions, lemmas, and theorems.
-import AsymptoticSubspace.DefComputationalModel
-import AsymptoticSubspace.DefMinimumBroadcastWeight
-import AsymptoticSubspace.DefThickness
+module
 
-import AsymptoticSubspace.LemHalfspaceDistFormula
-import AsymptoticSubspace.LemHalfspaceZone
-import AsymptoticSubspace.LemConcaveLine
-import AsymptoticSubspace.LemConcaveLineZero
-import AsymptoticSubspace.LemVolumes
+public import AsymptoticSubspace.DefComputationalModel
+public import AsymptoticSubspace.DefMinimumBroadcastWeight
+public import AsymptoticSubspace.DefThickness
 
-import AsymptoticSubspace.LemXiXip
-import AsymptoticSubspace.LemDifferences
-import AsymptoticSubspace.LemAccumulationPoint
-import AsymptoticSubspace.LemContinuity
-import AsymptoticSubspace.LemDeltaContraction
-import AsymptoticSubspace.LemContract
-import AsymptoticSubspace.LemConvexZeroHyperplane
+public import AsymptoticSubspace.LemHalfspaceDistFormula
+public import AsymptoticSubspace.LemHalfspaceZone
+public import AsymptoticSubspace.LemConcaveLine
+public import AsymptoticSubspace.LemConcaveLineZero
+public import AsymptoticSubspace.LemVolumes
 
-import AsymptoticSubspace.ThmSolving
-import AsymptoticSubspace.ThmImposs
+public import AsymptoticSubspace.LemXiXip
+public import AsymptoticSubspace.LemDifferences
+public import AsymptoticSubspace.LemAccumulationPoint
+public import AsymptoticSubspace.LemContinuity
+public import AsymptoticSubspace.LemDeltaContraction
+public import AsymptoticSubspace.LemContract
+public import AsymptoticSubspace.LemConvexZeroHyperplane
 
-import AsymptoticSubspace.ThmPoss
-import AsymptoticSubspace.GraphProducts
-import AsymptoticSubspace.BlockExecution
-import AsymptoticSubspace.ThmRooted
-import AsymptoticSubspace.EqualNeighbor
-import AsymptoticSubspace.CorBound
-import AsymptoticSubspace.CorCharacterization
-import AsymptoticSubspace.SymmetricBody
-import AsymptoticSubspace.Symmetrization
-import AsymptoticSubspace.ExternalGraphBound
-import AsymptoticSubspace.StatefulAlgorithms
-import AsymptoticSubspace.ExactDimension
-import AsymptoticSubspace.SymmetrizationCoordinates
-import AsymptoticSubspace.VariableRelaying
-import AsymptoticSubspace.ActualRounds
-import AsymptoticSubspace.ActualRoundLemmas
-import AsymptoticSubspace.PaperComputationalModel
-import AsymptoticSubspace.ExactHyperplane
-import AsymptoticSubspace.PhysicalRelaying
-import AsymptoticSubspace.PhysicalAveraging
-import AsymptoticSubspace.PhysicalRelayRates
-import AsymptoticSubspace.ThmLimitingVertices
-import AsymptoticSubspace.CorRootedVertices
+public import AsymptoticSubspace.ThmSolving
+public import AsymptoticSubspace.ThmImposs
+
+public import AsymptoticSubspace.ThmPoss
+public import AsymptoticSubspace.GraphProducts
+public import AsymptoticSubspace.BlockExecution
+public import AsymptoticSubspace.ThmRooted
+public import AsymptoticSubspace.EqualNeighbor
+public import AsymptoticSubspace.CorBound
+public import AsymptoticSubspace.CorCharacterization
+public import AsymptoticSubspace.SymmetricBody
+public import AsymptoticSubspace.Symmetrization
+public import AsymptoticSubspace.ExternalGraphBound
+public import AsymptoticSubspace.StatefulAlgorithms
+public import AsymptoticSubspace.ExactDimension
+public import AsymptoticSubspace.SymmetrizationCoordinates
+public import AsymptoticSubspace.VariableRelaying
+public import AsymptoticSubspace.ActualRounds
+public import AsymptoticSubspace.ActualRoundLemmas
+public import AsymptoticSubspace.PaperComputationalModel
+public import AsymptoticSubspace.ExactHyperplane
+public import AsymptoticSubspace.PhysicalRelaying
+public import AsymptoticSubspace.PhysicalAveraging
+public import AsymptoticSubspace.PhysicalRelayRates
+public import AsymptoticSubspace.ThmLimitingVertices
+public import AsymptoticSubspace.CorRootedVertices

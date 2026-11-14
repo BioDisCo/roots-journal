@@ -1,4 +1,6 @@
-import AsymptoticSubspace.LemVolumes
+module
+
+public import AsymptoticSubspace.LemVolumes
 
 /-!
 # Volumes of rotationally symmetric bodies
@@ -8,6 +10,8 @@ inequalities are stated together. Sections have dimension `m`, so the ambient
 dimension in the paper is `d = m + 1`. Integrability follows from the profile
 hypotheses via `concave_profile_intervalIntegrable`.
 -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -31,7 +35,7 @@ theorem volume_symmetricBody_truncated {m : ℕ} (hm : 0 < m) (r : ℝ → ℝ) 
     volume (symmetricBody m (fun x => if x ∈ Icc a b then r x else 0)) =
       volume (symmetricBodyOn m r a b) := by
   classical
-  letI : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp hm
+  let : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp hm
   have hnull : volume {z : ℝ × EuclideanSpace ℝ (Fin m) | z.2 = 0} = 0 := by
     have heq : {z : ℝ × EuclideanSpace ℝ (Fin m) | z.2 = 0} =
         (univ : Set ℝ) ×ˢ ({0} : Set (EuclideanSpace ℝ (Fin m))) := by ext z; simp
@@ -72,7 +76,7 @@ theorem volume_symmetricBodyOn {m : ℕ} {r : ℝ → ℝ} (hr : Measurable r) (
 lemma section_ball_volume {m : ℕ} (hm : 0 < m) {ρ : ℝ} (hρ : 0 ≤ ρ) :
     volume (Metric.closedBall (0 : EuclideanSpace ℝ (Fin m)) ρ) =
       ENNReal.ofReal (C_dMinusOne (m + 1) * ρ ^ m) := by
-  letI : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp hm
+  let : Nonempty (Fin m) := Fin.pos_iff_nonempty.mp hm
   have hC : 0 ≤ C_dMinusOne (m + 1) := by
     unfold C_dMinusOne
     exact div_nonneg (Real.rpow_nonneg Real.pi_pos.le _)

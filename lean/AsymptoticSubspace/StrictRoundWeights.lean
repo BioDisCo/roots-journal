@@ -1,4 +1,8 @@
-import Mathlib
+module
+
+public import Mathlib
+
+@[expose] public section
 
 noncomputable section
 
@@ -140,7 +144,7 @@ lemma strictRoundWeight_eq_sum (i : ℕ) :
     | zero => simp
     | succ L ih => rw [sum_range_succ, ih]; push_cast; ring
   have he (i j : ℕ) (h : j < i + 1) : strictEdgeWeight i j = (2 * j + 1 - i : ℕ) := by
-    simp only [strictEdgeWeight, if_pos (by omega : j ≤ i)]
+    simp only [strictEdgeWeight, ite_eq_left (by omega : j ≤ i)]
   have heq : (∑ j ∈ range (i + 1), strictEdgeWeight i j) =
       ∑ j ∈ range (i + 1), ((2 * j + 1 - i : ℕ) : ℝ) :=
     sum_congr rfl (fun j hj => he i j (mem_range.mp hj))

@@ -1,5 +1,9 @@
-import AsymptoticSubspace.DefComputationalModel
-import AsymptoticSubspace.ActualRounds
+module
+
+public import AsymptoticSubspace.DefComputationalModel
+public import AsymptoticSubspace.ActualRounds
+
+@[expose] public section
 
 noncomputable section
 
@@ -105,6 +109,5 @@ theorem no_remote_edge_spy :
     hview (fun _ _ => rfl)
   rw [hspy, hspy] at heq
   norm_num [remoteEdgeIndicator, remoteEdgeOff, remoteEdgeOn] at heq
-  exact (by decide : (1 : Fin 3) ≠ 2) heq
 
 end AsymptoticSubspace.PaperComputationalModel

@@ -1,6 +1,10 @@
-import AsymptoticSubspace.ComputationalModelCore
+module
+
+public import AsymptoticSubspace.ComputationalModelCore
 
 /-! Enlarging an affine subspace to a prescribed dimension and convergence under containment. -/
+
+@[expose] public section
 
 noncomputable section
 

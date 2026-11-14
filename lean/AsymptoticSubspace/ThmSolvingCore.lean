@@ -1,7 +1,11 @@
 -- Internal plumbing module.
 -- Reader-facing statement is in `ThmSolving.lean`.
-import AsymptoticSubspace.LemDeltaContraction
-import AsymptoticSubspace.NestedHulls
+module
+
+public import AsymptoticSubspace.LemDeltaContraction
+public import AsymptoticSubspace.NestedHulls
+
+@[expose] public section
 
 noncomputable section
 
@@ -134,7 +138,7 @@ theorem theorem_solving_core [NeZero n]
         (fun t => E.outputs t i)
         (convexHull ℝ (Set.range (E.outputs 0)))) := by
   classical
-  letI : DecidableEq V := Classical.decEq V
+  let : DecidableEq V := Classical.decEq V
   rcases lemma_Delta_contraction (V := V) k hk E M α hα_pos hmbw hcard with
     ⟨Pi0, hPiStar0, hkerPi0, hthick0⟩
   rcases (isStarProjection_iff_eq_starProjection.mp hPiStar0) with ⟨K, _hK, hPiEq⟩

@@ -1,6 +1,10 @@
-import AsymptoticSubspace.BlockExecution
-import AsymptoticSubspace.LinearGraphBound
-import AsymptoticSubspace.ThmSolving
+module
+
+public import AsymptoticSubspace.BlockExecution
+public import AsymptoticSubspace.LinearGraphBound
+public import AsymptoticSubspace.ThmSolving
+
+@[expose] public section
 
 noncomputable section
 

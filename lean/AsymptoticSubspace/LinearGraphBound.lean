@@ -1,10 +1,14 @@
-import AsymptoticSubspace.StrictRoundCounting
+module
+
+public import AsymptoticSubspace.StrictRoundCounting
 
 /-! The sharp linear rooted-to-broadcastable bound. The backward-cover and
 strict-rounds argument follows El-Hayek, Henzinger, and Schmid, ITCS 2023,
 Theorem 32 (CC-BY 4.0): https://doi.org/10.4230/LIPIcs.ITCS.2023.47.
 We work directly with rooted directed graphs; no spanning-forest assumption
 or unproved graph inequality is needed. -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -54,7 +58,7 @@ lemma backwardDuration_row (G : Round → CommGraph n) (T k : ℕ)
     have hi₁ : k + (j + l) + 1 = k + j + 1 + l := by omega
     have hi₂ : k + (j + l) = k + j + 1 + l - 1 := by omega
     have hw : 2 * j + 1 - (j + l) = 2 * (k + j + 1) - k - (k + j + 1 + l) := by omega
-    simp only [strictEdgeWeight, if_pos (by omega : j ≤ j + l), backwardDuration]
+    simp only [strictEdgeWeight, ite_eq_left (by omega : j ≤ j + l), backwardDuration]
     rw [hi₁, hi₂, hw]
     exact mul_comm _ _
   rw [he]

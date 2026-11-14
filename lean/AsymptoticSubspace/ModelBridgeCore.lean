@@ -1,8 +1,12 @@
 -- Internal plumbing module.
 -- Reader-facing statements live in `Def*`, `Lem*`, and `Thm*` files.
-import AsymptoticSubspace.ComputationalModelCore
-import AsymptoticSubspace.PaperFormalizationCore
-import AsymptoticSubspace.LemContinuity
+module
+
+public import AsymptoticSubspace.ComputationalModelCore
+public import AsymptoticSubspace.PaperFormalizationCore
+public import AsymptoticSubspace.LemContinuity
+
+@[expose] public section
 
 noncomputable section
 

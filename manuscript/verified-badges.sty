@@ -12,6 +12,7 @@
 
 \RequirePackage{hyperref}
 \RequirePackage{graphicx}
+\RequirePackage{etoolbox}
 
 % ---------------------------------------------------------------
 % Badge height and vertical offset (tweak to taste)
@@ -26,7 +27,11 @@
 % Generic command: \verifiedproof[badge-file]{url}
 % ---------------------------------------------------------------
 \newcommand{\verifiedproof}[2][lean]{%
-  \href{#2}{\raisebox{\badgeraise}{\includegraphics[height=\badgeheight]{badges/#1}}}%
+  \ifstrempty{#2}{%
+    \raisebox{\badgeraise}{\includegraphics[height=\badgeheight]{badges/#1}}%
+  }{%
+    \href{#2}{\raisebox{\badgeraise}{\includegraphics[height=\badgeheight]{badges/#1}}}%
+  }%
 }
 
 % ---------------------------------------------------------------
@@ -35,7 +40,11 @@
 % but whose proofs are not (yet).
 % ---------------------------------------------------------------
 \newcommand{\formalizedstmt}[2][lean-formalized]{%
-  \href{#2}{\raisebox{\badgeraise}{\includegraphics[height=\badgeheight]{badges/#1}}}%
+  \ifstrempty{#2}{%
+    \raisebox{\badgeraise}{\includegraphics[height=\badgeheight]{badges/#1}}%
+  }{%
+    \href{#2}{\raisebox{\badgeraise}{\includegraphics[height=\badgeheight]{badges/#1}}}%
+  }%
 }
 
 % ---------------------------------------------------------------

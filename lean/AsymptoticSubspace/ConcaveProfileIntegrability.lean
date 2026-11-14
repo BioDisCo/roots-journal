@@ -1,4 +1,8 @@
-import AsymptoticSubspace.PaperFormalizationCore
+module
+
+public import AsymptoticSubspace.PaperFormalizationCore
+
+@[expose] public section
 
 noncomputable section
 

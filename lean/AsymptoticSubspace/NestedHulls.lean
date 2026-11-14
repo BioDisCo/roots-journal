@@ -1,6 +1,10 @@
-import AsymptoticSubspace.AveragingHulls
+module
+
+public import AsymptoticSubspace.AveragingHulls
 
 /-! Compactness and convergence of the nested convex hulls of an averaging execution. -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -15,7 +19,7 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 omit [NeZero n] in
 lemma poly_compact (E : AveragingExecution (V := V) n) (t : ℕ) :
     IsCompact (Poly E t) :=
-  (finite_range (E.outputs t)).isCompact_convexHull
+  (finite_range (E.outputs t)).isCompact_convexHull ℝ
 
 /-- The nonempty nested compact hulls have a nonempty intersection. -/
 lemma poly_limit_nonempty (E : AveragingExecution (V := V) n) :
@@ -38,8 +42,7 @@ lemma poly_tendsto_limit (E : AveragingExecution (V := V) n) :
     (ModelLemmas.poly_antitone E).directed_ge (poly_compact E)
     (fun t => (poly_compact E t).isClosed)
     (U := Metric.thickening (ε / 2) (⋂ s, Poly E s))
-    (fun x hx => Metric.isOpen_thickening.mem_nhds
-      (Metric.self_subset_thickening hε2 _ hx))
+    (Metric.isOpen_thickening.mem_nhdsSet.mpr (Metric.self_subset_thickening hε2 _))
   refine ⟨T, fun t ht => ?_⟩
   rw [Real.dist_eq, sub_zero, abs_of_nonneg Metric.hausdorffDist_nonneg]
   calc
@@ -62,8 +65,7 @@ lemma outputs_converge_poly_limit (E : AveragingExecution (V := V) n) (i : Proc 
     (ModelLemmas.poly_antitone E).directed_ge (poly_compact E)
     (fun t => (poly_compact E t).isClosed)
     (U := Metric.thickening ε (⋂ s, Poly E s))
-    (fun x hx => Metric.isOpen_thickening.mem_nhds
-      (Metric.self_subset_thickening hε _ hx))
+    (Metric.isOpen_thickening.mem_nhdsSet.mpr (Metric.self_subset_thickening hε _))
   refine ⟨T, fun t ht => ?_⟩
   obtain ⟨y, hy, hxy⟩ := Metric.mem_thickening_iff.mp
     (hT (ModelLemmas.poly_antitone E ht (ModelLemmas.output_mem_poly_self E t i)))

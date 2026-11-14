@@ -1,4 +1,8 @@
-import AsymptoticSubspace.CorCharacterization
+module
+
+public import AsymptoticSubspace.CorCharacterization
+
+@[expose] public section
 
 noncomputable section
 
@@ -106,7 +110,7 @@ theorem lemma_imposs_stateful {V State : Type*} [NormedAddCommGroup V] [NormedSp
   have hAdm : AdmissibleTrace N G := fun _ => d.graph_in_adversary
   obtain ⟨E, hfdE, hdimE, hToE, _⟩ := hA G init hAdm
   have hclosedE : IsClosed (E : Set V) := by
-    letI : FiniteDimensional ℝ E.direction := hfdE
+    let : FiniteDimensional ℝ E.direction := hfdE
     exact (AffineSubspace.isClosed_direction_iff (R := ℝ) (V := V) (P := V) E).mp
       (Submodule.closed_of_finiteDimensional (s := E.direction))
   have hsubset : range (fun p : d.roots => init p) ⊆ (E : Set V) := by

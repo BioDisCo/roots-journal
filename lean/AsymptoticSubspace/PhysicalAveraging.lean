@@ -1,5 +1,9 @@
-import AsymptoticSubspace.PhysicalRelaying
-import AsymptoticSubspace.ActualRounds
+module
+
+public import AsymptoticSubspace.PhysicalRelaying
+public import AsymptoticSubspace.ActualRounds
+
+@[expose] public section
 
 noncomputable section
 
@@ -37,7 +41,7 @@ lemma update_floodBuffer (R : LocalAveragingRule V n) (t : Round) (i : Proc n)
   apply Finset.sum_congr rfl
   intro j _
   by_cases h : (graphProduct G start len).edge j i
-  · simp only [floodBuffer, if_pos h, Option.getD_some]
+  · simp only [floodBuffer, ite_eq_left h, Option.getD_some]
   · rw [R.support t i _ j (by simp [floodBuffer, h])]
     simp
 
@@ -58,7 +62,7 @@ def macroBuffer (R : LocalAveragingRule V n) (B : RelayingSchedule)
 lemma macroBuffer_self (R : LocalAveragingRule V n) (B : RelayingSchedule)
     (G : Round → CommGraph n) (init : Proc n → V) (t : ℕ) (i : Proc n) :
     R.macroBuffer B G init t i i = some (R.macroOutputs B G init (t - 1) i) := by
-  simp only [macroBuffer, floodBuffer, if_pos (CommGraph.self_loop _ i)]
+  simp only [macroBuffer, floodBuffer, ite_eq_left (CommGraph.self_loop _ i)]
 
 /-- The stochastic macro execution is derived from the physical update rule.
 The unused round-zero graph/weight slot duplicates the first block. -/
@@ -90,7 +94,7 @@ theorem macroExecution_safe (R : LocalAveragingRule V n) (B : RelayingSchedule)
   apply hsafe (B.boundary (t - 1 + 1))
     ((Nat.zero_lt_succ (t - 1)).trans_le (B.le_boundary (t - 1 + 1))) i _ j
     (R.macroOutputs B G init (t - 1) j)
-  simp only [macroBuffer, floodBuffer, if_pos h]
+  simp only [macroBuffer, floodBuffer, ite_eq_left h]
 
 /-- Safety only for buffers actually received during this execution. In
 particular, no lower weight bound is demanded on unreachable input buffers. -/
@@ -123,7 +127,7 @@ theorem macroExecution_safeActualRounds_of_safeExecution
   change (graphProduct G (B.boundary k) (B.boundary (k + 1) - B.boundary k)).edge j i at h
   change floodBuffer G (B.boundary k) (B.boundary (k + 1) - B.boundary k)
     (R.macroOutputs B G init k) i j = some (R.macroOutputs B G init k j)
-  simp only [floodBuffer, if_pos h]
+  simp only [floodBuffer, ite_eq_left h]
 
 /-- Safety of the sampled execution is exactly safety on the received buffers
 of the relayed protocol. -/
@@ -199,7 +203,8 @@ theorem physical_averaging_converges_of_safeExecution
     simpa only [LocalAveragingRule.physical_run] using
       B.convergence (x := fun t => R.macroOutputs B G init t i) (hconv i)
   · intro i
-    simpa only [LocalAveragingRule.physical_run] using
+    simpa only [LocalAveragingRule.physical_run, ModelLemmas.Poly, ModelLemmas.Values,
+      LocalAveragingRule.macroExecution, LocalAveragingRule.macroOutputs] using
       B.convergence (x := fun t => R.macroOutputs B G init t i) (hvalid i)
 
 /-- Convenience form for a rule safe on every possible received buffer. -/

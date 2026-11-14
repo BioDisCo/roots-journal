@@ -1,5 +1,9 @@
-import AsymptoticSubspace.BrunnMinkowski.BrunnMinkowski
-import Mathlib
+module
+
+public import AsymptoticSubspace.BrunnMinkowski.BrunnMinkowski
+public import Mathlib
+
+@[expose] public section
 
 noncomputable section
 

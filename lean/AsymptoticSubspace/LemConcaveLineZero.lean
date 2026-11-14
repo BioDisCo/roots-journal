@@ -2,9 +2,13 @@
 -- For a concave nonneg function r on [a,c], the zero line through (b, r(b))
 -- lies above r on [a,b] and below r on [b,c].
 
-import AsymptoticSubspace.PaperFormalizationCore
+module
+
+public import AsymptoticSubspace.PaperFormalizationCore
 
 /-! Lemma 8: secant bounds with a zero endpoint. -/
+
+@[expose] public section
 
 noncomputable section
 
