@@ -1,6 +1,6 @@
 -- Internal plumbing module.
 -- Reader-facing statements live in `Lem*` and `Thm*` files.
-import Mathlib
+import AsymptoticSubspace.SimplexVolume
 
 noncomputable section
 
@@ -442,19 +442,35 @@ theorem lemma_convex_zero_hyperplane
   · intro hCzero
     have hSpanNeTop : affineSpan ℝ C ≠ ⊤ := by
       intro hSpanTop
-      -- A full affine basis in C generates a nondegenerate simplex contained in C.
+      classical
+      -- Choose d+1 affinely independent points of C and their edge-vector basis.
       obtain ⟨s, hsC, b, hb⟩ := AffineBasis.exists_affine_subbasis hSpanTop
-      have hsSpan : affineSpan ℝ s = ⊤ := by
-        simpa [hb] using b.tot
-      have hSimplexSpan : affineSpan ℝ (convexHull ℝ s) = ⊤ := by
-        rw [affineSpan_convexHull, hsSpan]
-      have hSimplexInterior : (interior (convexHull ℝ s)).Nonempty :=
-        (convex_convexHull ℝ s).interior_nonempty_iff_affineSpan_eq_top.mpr hSimplexSpan
-      have hSimplexPos : 0 < MeasureTheory.volume (convexHull ℝ s) :=
-        (IsOpen.measure_pos MeasureTheory.volume isOpen_interior hSimplexInterior).trans_le
-          (MeasureTheory.measure_mono interior_subset)
+      let p : s := Classical.choice b.nonempty
+      let edges := b.basisOf p
+      letI : Finite {j : s // j ≠ p} := Module.Finite.finite_basis edges
+      letI := Fintype.ofFinite {j : s // j ≠ p}
+      let e : {j : s // j ≠ p} ≃ Fin (Module.finrank ℝ V) :=
+        Fintype.equivOfCardEq (by rw [Fintype.card_fin, Module.finrank_eq_card_basis edges])
+      let v := edges.reindex e
+      let o := stdOrthonormalBasis ℝ V
+      have hbC (j : s) : b j ∈ C := by rw [hb]; exact hsC j.property
+      have hvertices : insert (b p) (Set.range (fun i => b p + v i)) ⊆ C := by
+        rintro x (rfl | ⟨i, rfl⟩)
+        · exact hbC p
+        · have heq : b p + v i = b (e.symm i).val := by
+            simp [v, edges, AffineBasis.basisOf_apply, vsub_eq_sub]
+          change b p + v i ∈ C
+          rw [heq]
+          exact hbC _
+      -- The determinant of the edge basis is nonzero, so |det| / d! is positive.
+      have hdet : o.toBasis.det v ≠ 0 := (o.toBasis.isUnit_det v).ne_zero
+      have hSimplexPos : 0 < MeasureTheory.volume
+          (convexHull ℝ (insert (b p) (Set.range (fun i => b p + v i)))) := by
+        rw [SimplexVolume.volume_simplex o v (b p)]
+        exact ENNReal.ofReal_pos.mpr (div_pos (abs_pos.mpr hdet)
+          (Nat.cast_pos.mpr (Nat.factorial_pos _)))
       have hCpos := hSimplexPos.trans_le
-        (MeasureTheory.measure_mono (convexHull_min hsC hCconv))
+        (MeasureTheory.measure_mono (convexHull_min hvertices hCconv))
       rw [hCzero] at hCpos
       exact lt_irrefl 0 hCpos
     exact ⟨affineSpan ℝ C, hSpanNeTop, subset_affineSpan ℝ C⟩

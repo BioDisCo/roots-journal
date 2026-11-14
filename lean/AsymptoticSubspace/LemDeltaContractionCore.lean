@@ -108,6 +108,34 @@ end PartOne
 
 section PartTwo
 
+/-- Unroll the perturbed geometric recursion, from any starting index. -/
+lemma perturbed_geometric_unroll (a eps : ℕ → ℝ) {r : ℝ} (hr : 0 ≤ r)
+    (hrec : ∀ i, a (i + 1) ≤ r * a i + eps i) (N k : ℕ) :
+    a (N + k) ≤ r ^ k * a N +
+      ∑ j ∈ Finset.range k, r ^ (k - 1 - j) * eps (N + j) := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    calc
+      a (N + (k + 1)) ≤ r * a (N + k) + eps (N + k) := by
+        simpa [Nat.add_assoc] using hrec (N + k)
+      _ ≤ r * (r ^ k * a N +
+          ∑ j ∈ Finset.range k, r ^ (k - 1 - j) * eps (N + j)) + eps (N + k) :=
+        add_le_add (mul_le_mul_of_nonneg_left ih hr) le_rfl
+      _ = r ^ (k + 1) * a N +
+          ∑ j ∈ Finset.range (k + 1), r ^ (k + 1 - 1 - j) * eps (N + j) := by
+        rw [Finset.sum_range_succ, mul_add, Finset.mul_sum]
+        have hs : ∑ j ∈ Finset.range k, r * (r ^ (k - 1 - j) * eps (N + j)) =
+            ∑ j ∈ Finset.range k, r ^ (k + 1 - 1 - j) * eps (N + j) := by
+          apply Finset.sum_congr rfl
+          intro j hj
+          have hjk := Finset.mem_range.mp hj
+          rw [show k + 1 - 1 - j = (k - 1 - j) + 1 by omega, pow_succ]
+          ring
+        rw [hs]
+        simp [pow_succ]
+        ring
+
 /--
 Part 2 (analysis): perturbed geometric recursion converges to `0`.
 
@@ -140,40 +168,32 @@ lemma perturbed_geometric_convergesTo_zero
   have hM_pos : 0 < M := by
     dsimp [M]
     exact lt_of_lt_of_le hε_half_pos (le_max_right _ _)
-  have hbound :
-      ∀ k : ℕ, a (T1 + k) ≤ r ^ k * M + ε / 2 := by
+  -- Split at T1: the finite prefix is absorbed into a T1; the tail is a
+  -- geometric sum with perturbations bounded by α * (ε / 2).
+  have hbound : ∀ k : ℕ, a (T1 + k) ≤ r ^ k * M + ε / 2 := by
     intro k
-    induction k with
-    | zero =>
+    have hunroll := perturbed_geometric_unroll a eps hr_nonneg hrec T1 k
+    have htail :
+        (∑ j ∈ Finset.range k, r ^ (k - 1 - j) * eps (T1 + j)) ≤ ε / 2 := by
+      have heps_le (j : ℕ) : eps (T1 + j) ≤ α * (ε / 2) := by
+        have habs : |eps (T1 + j)| < α * (ε / 2) := by
+          simpa [Real.norm_eq_abs] using hT1 (T1 + j) (Nat.le_add_right T1 j)
+        exact (le_abs_self _).trans habs.le
       calc
-        a (T1 + 0) = a T1 := by simp
-        _ ≤ M := by
-          dsimp [M]
-          exact le_max_left _ _
-        _ ≤ r ^ 0 * M + ε / 2 := by
-          simp [hε_half_pos.le]
-    | succ k ih =>
-      have heps_le : eps (T1 + k) ≤ α * (ε / 2) := by
-        have habs_lt : |eps (T1 + k)| < α * (ε / 2) := by
-          simpa [Real.norm_eq_abs] using hT1 (T1 + k) (Nat.le_add_right T1 k)
-        have heps_lt : eps (T1 + k) < α * (ε / 2) := by
-          exact lt_of_le_of_lt (le_abs_self (eps (T1 + k))) habs_lt
-        exact le_of_lt heps_lt
-      have hmul :
-          r * a (T1 + k) ≤ r * (r ^ k * M + ε / 2) := by
-        gcongr
-      have hstep :
-          a (T1 + (k + 1)) ≤ r * (r ^ k * M + ε / 2) + α * (ε / 2) := by
-        have hrec' : a (T1 + (k + 1)) ≤ r * a (T1 + k) + eps (T1 + k) := by
-          simpa [r, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using hrec (T1 + k)
-        linarith
-      have hr_add : r + α = 1 := by
-        dsimp [r]
-        ring
-      calc
-        a (T1 + (k + 1)) ≤ r * (r ^ k * M + ε / 2) + α * (ε / 2) := hstep
-        _ = r ^ (k + 1) * M + (r + α) * (ε / 2) := by ring
-        _ = r ^ (k + 1) * M + ε / 2 := by simp [hr_add]
+        (∑ j ∈ Finset.range k, r ^ (k - 1 - j) * eps (T1 + j)) ≤
+            ∑ j ∈ Finset.range k, r ^ (k - 1 - j) * (α * (ε / 2)) :=
+          Finset.sum_le_sum fun j _ =>
+            mul_le_mul_of_nonneg_left (heps_le j) (pow_nonneg hr_nonneg _)
+        _ = (∑ j ∈ Finset.range k, r ^ j) * (α * (ε / 2)) := by
+          rw [← Finset.sum_mul, Finset.sum_range_reflect]
+        _ ≤ (1 / α) * (α * (ε / 2)) := by
+          apply mul_le_mul_of_nonneg_right _ hδ_pos.le
+          have hg := geom_sum_Ico_le_of_lt_one (m := 0) (n := k) hr_nonneg hr_lt_one
+          simpa [r] using hg
+        _ = ε / 2 := by field_simp
+    have hprefix : r ^ k * a T1 ≤ r ^ k * M :=
+      mul_le_mul_of_nonneg_left (le_max_left _ _) (pow_nonneg hr_nonneg _)
+    linarith
   have hq_pos : 0 < (ε / 2) / M := by positivity
   rcases exists_pow_lt_of_lt_one hq_pos hr_lt_one with ⟨K, hKpow⟩
   have hKmul : r ^ K * M < ε / 2 := by
@@ -793,9 +813,13 @@ lemma paper_delta_contraction_convergence [NeZero n]
     (hφtendsto : Filter.Tendsto (PiSeq ∘ φ) Filter.atTop (nhds Pi))
     (hOneStep : ∀ t, thicknessAt (PiSeq t) E (t + 1) ≤ (1 - α) * thicknessAt (PiSeq t) E t) :
     ConvergesTo (fun t => thicknessAt Pi E t) 0 := by
-  let a : ℕ → ℝ := fun i => thicknessAt (PiSeq (φ i)) E (φ i)
+  let a : ℕ → ℝ := fun i => thicknessAt (PiSeq (φ i)) E (φ i + 1)
   let D : ℝ := pairDiameter (outputSet E 0) (outputSet_nonempty (E := E) 0)
-  let eps : ℕ → ℝ := fun i => ‖PiSeq (φ (i + 1)) - PiSeq (φ i)‖ * D
+  -- `φ i + 1` is the selected round τᵢ; sample after its update.
+  let eps : ℕ → ℝ := fun i => (1 - α) *
+    |thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1) -
+      thicknessAt (PiSeq (φ i)) E (φ i + 1)|
+  have heps_nonneg (i) : 0 ≤ eps i := mul_nonneg (by linarith) (abs_nonneg _)
   have hD_nonneg : 0 ≤ D := by
     rcases outputSet_nonempty (E := E) 0 with ⟨x, hx⟩
     have hp : (x, x) ∈ (outputSet E 0).product (outputSet E 0) := by simp [hx]
@@ -804,54 +828,46 @@ lemma paper_delta_contraction_convergence [NeZero n]
       exact Finset.le_sup' (f := fun p : V × V => ‖p.1 - p.2‖) hp
     have h0 : 0 ≤ ‖x - x‖ := norm_nonneg _
     exact le_trans h0 hle
+  have heps_bound (i) : eps i ≤ ‖PiSeq (φ (i + 1)) - PiSeq (φ i)‖ * D := by
+    have hcont := thicknessAt_continuity_bound
+      (P := PiSeq (φ (i + 1))) (Q := PiSeq (φ i)) (E := E) (t := φ i + 1)
+    have hdiam := pairDiameter_le_initial (E := E) (t := φ i + 1)
+    have hbound :
+        |thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1) -
+          thicknessAt (PiSeq (φ i)) E (φ i + 1)| ≤
+        ‖PiSeq (φ (i + 1)) - PiSeq (φ i)‖ * D :=
+      hcont.trans (mul_le_mul_of_nonneg_left hdiam (norm_nonneg _))
+    exact (mul_le_of_le_one_left (abs_nonneg _) (by linarith : 1 - α ≤ 1)).trans hbound
   have hrec : ∀ i, a (i + 1) ≤ (1 - α) * a i + eps i := by
     intro i
     have hphi : φ i + 1 ≤ φ (i + 1) := Nat.succ_le_of_lt (hφmono (Nat.lt_succ_self i))
-    have hmonoA :
-        thicknessAt (PiSeq (φ (i + 1))) E (φ (i + 1))
-          ≤ thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1) := by
-      exact (thicknessAt_antitone (P := PiSeq (φ (i + 1))) (E := E)) hphi
-    have hcont_abs :
-        |thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1)
-            - thicknessAt (PiSeq (φ i)) E (φ i + 1)|
-          ≤ ‖PiSeq (φ (i + 1)) - PiSeq (φ i)‖ * D := by
-      have hbase :
-          |thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1)
-              - thicknessAt (PiSeq (φ i)) E (φ i + 1)|
-            ≤ ‖PiSeq (φ (i + 1)) - PiSeq (φ i)‖ *
-              pairDiameter (outputSet E (φ i + 1)) (outputSet_nonempty (E := E) (φ i + 1)) := by
-        exact thicknessAt_continuity_bound (P := PiSeq (φ (i + 1))) (Q := PiSeq (φ i))
-          (E := E) (t := φ i + 1)
-      have hdiam :
-          pairDiameter (outputSet E (φ i + 1)) (outputSet_nonempty (E := E) (φ i + 1)) ≤ D := by
-        simpa [D] using pairDiameter_le_initial (E := E) (t := φ i + 1)
-      exact le_trans hbase (by gcongr)
-    have hcont_le :
-        thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1)
-          ≤ thicknessAt (PiSeq (φ i)) E (φ i + 1) + eps i := by
-      dsimp [eps]
-      have hab :
-          thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1)
-            - thicknessAt (PiSeq (φ i)) E (φ i + 1)
-          ≤ ‖PiSeq (φ (i + 1)) - PiSeq (φ i)‖ * D := by
-        exact le_trans (le_abs_self _ ) hcont_abs
-      linarith
-    have hone :
-        thicknessAt (PiSeq (φ i)) E (φ i + 1)
-          ≤ (1 - α) * thicknessAt (PiSeq (φ i)) E (φ i) := hOneStep (φ i)
-    dsimp [a, eps]
-    linarith
+    have hmono := thicknessAt_antitone (P := PiSeq (φ (i + 1))) (E := E) hphi
+    have hchange := le_abs_self
+      (thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1) -
+        thicknessAt (PiSeq (φ i)) E (φ i + 1))
+    calc
+      a (i + 1) ≤ (1 - α) * thicknessAt (PiSeq (φ (i + 1))) E (φ (i + 1)) :=
+        hOneStep (φ (i + 1))
+      _ ≤ (1 - α) * thicknessAt (PiSeq (φ (i + 1))) E (φ i + 1) :=
+        mul_le_mul_of_nonneg_left hmono (by linarith)
+      _ ≤ (1 - α) * a i + eps i := by
+        dsimp [a, eps]
+        nlinarith
   have ha_nonneg : ∀ i, 0 ≤ a i := by
     intro i
     dsimp [a]
-    exact thicknessAt_nonneg (P := PiSeq (φ i)) (E := E) (t := φ i)
+    exact thicknessAt_nonneg (P := PiSeq (φ i)) (E := E) (t := φ i + 1)
   have hxconv : ConvergesTo (fun i => PiSeq (φ i)) Pi :=
     convergesTo_of_tendsto (x := fun i => PiSeq (φ i)) (l := Pi) hφtendsto
   have hdiff : ConvergesTo (fun i => ‖PiSeq (φ (i + 1)) - PiSeq (φ i)‖) 0 :=
     adjacent_norm_converges_to_zero (x := fun i => PiSeq (φ i)) (l := Pi) hxconv
   have heps : ConvergesTo eps 0 := by
     by_cases hD0 : D = 0
-    · simpa [eps, hD0] using convergesTo_const (0 : ℝ)
+    · have heps_zero : eps = fun _ => 0 := by
+        funext i
+        exact le_antisymm (by simpa [hD0] using heps_bound i) (heps_nonneg i)
+      rw [heps_zero]
+      exact convergesTo_const 0
     · have hD_pos : 0 < D := lt_of_le_of_ne hD_nonneg (Ne.symm hD0)
       intro ε hε
       rcases hdiff (ε / D) (by positivity) with ⟨T, hT⟩
@@ -865,17 +881,14 @@ lemma paper_delta_contraction_convergence [NeZero n]
           have := mul_lt_mul_of_pos_right hlt hD_pos
           have hdiv : (ε / D) * D = ε := by field_simp [hD0]
           simpa [hdiv]
-      have hnonneg : 0 ≤ eps i := by
-        dsimp [eps]
-        exact mul_nonneg (norm_nonneg _) hD_nonneg
-      have hmul_eps : eps i < ε := by
-        simpa [eps] using hmul
+      have hnonneg : 0 ≤ eps i := heps_nonneg i
+      have hmul_eps : eps i < ε := (heps_bound i).trans_lt hmul
       have habs : |eps i - 0| < ε := by
         simpa [sub_eq_add_neg, abs_of_nonneg hnonneg] using hmul_eps
       simpa [Real.norm_eq_abs] using habs
   have ha_conv : ConvergesTo a 0 :=
     perturbed_geometric_convergesTo_zero a eps α ⟨hα_pos, hα_lt_one⟩ ha_nonneg hrec heps
-  have htransfer : ConvergesTo (fun i => thicknessAt Pi E (φ i)) 0 := by
+  have htransfer : ConvergesTo (fun i => thicknessAt Pi E (φ i + 1)) 0 := by
     intro ε hε
     have hε2 : 0 < ε / 2 := by linarith
     rcases ha_conv (ε / 2) hε2 with ⟨T1, hT1⟩
@@ -906,50 +919,50 @@ lemma paper_delta_contraction_convergence [NeZero n]
     have ha_small : ‖a i - 0‖ < ε / 2 := hT1 i (le_trans (le_max_left _ _) hi)
     have hδ_small : ‖delta i - 0‖ < ε / 2 := hT2 i (le_trans (le_max_right _ _) hi)
     have hcont_abs :
-        |thicknessAt Pi E (φ i) - a i| ≤ delta i := by
+        |thicknessAt Pi E (φ i + 1) - a i| ≤ delta i := by
       have hbase :
-          |thicknessAt Pi E (φ i) - thicknessAt (PiSeq (φ i)) E (φ i)|
+          |thicknessAt Pi E (φ i + 1) - thicknessAt (PiSeq (φ i)) E (φ i + 1)|
             ≤ ‖Pi - PiSeq (φ i)‖ *
-              pairDiameter (outputSet E (φ i)) (outputSet_nonempty (E := E) (φ i)) := by
-        exact thicknessAt_continuity_bound (P := Pi) (Q := PiSeq (φ i)) (E := E) (t := φ i)
+              pairDiameter (outputSet E (φ i + 1)) (outputSet_nonempty (E := E) (φ i + 1)) := by
+        exact thicknessAt_continuity_bound (P := Pi) (Q := PiSeq (φ i)) (E := E) (t := φ i + 1)
       have hdiam :
-          pairDiameter (outputSet E (φ i)) (outputSet_nonempty (E := E) (φ i)) ≤ D := by
-        simpa [D] using pairDiameter_le_initial (E := E) (t := φ i)
+          pairDiameter (outputSet E (φ i + 1)) (outputSet_nonempty (E := E) (φ i + 1)) ≤ D := by
+        simpa [D] using pairDiameter_le_initial (E := E) (t := φ i + 1)
       have hmul :
           ‖Pi - PiSeq (φ i)‖ *
-              pairDiameter (outputSet E (φ i)) (outputSet_nonempty (E := E) (φ i))
+              pairDiameter (outputSet E (φ i + 1)) (outputSet_nonempty (E := E) (φ i + 1))
             ≤ delta i := by
         dsimp [delta]
         gcongr
       dsimp [a] at *
       exact le_trans hbase hmul
     have hmain_le :
-        ‖thicknessAt Pi E (φ i) - 0‖ ≤ ‖a i - 0‖ + ‖delta i - 0‖ := by
+        ‖thicknessAt Pi E (φ i + 1) - 0‖ ≤ ‖a i - 0‖ + ‖delta i - 0‖ := by
       have hdelta_nonneg : 0 ≤ delta i := by
         dsimp [delta]
         exact mul_nonneg (norm_nonneg _) hD_nonneg
-      have hleft : ‖thicknessAt Pi E (φ i) - a i‖ ≤ ‖delta i - 0‖ := by
-        have habs : |thicknessAt Pi E (φ i) - a i| ≤ delta i := hcont_abs
+      have hleft : ‖thicknessAt Pi E (φ i + 1) - a i‖ ≤ ‖delta i - 0‖ := by
+        have habs : |thicknessAt Pi E (φ i + 1) - a i| ≤ delta i := hcont_abs
         simpa [Real.norm_eq_abs, abs_of_nonneg hdelta_nonneg] using habs
       calc
-        ‖thicknessAt Pi E (φ i) - 0‖
-            ≤ ‖thicknessAt Pi E (φ i) - a i‖ + ‖a i - 0‖ := by
+        ‖thicknessAt Pi E (φ i + 1) - 0‖
+            ≤ ‖thicknessAt Pi E (φ i + 1) - a i‖ + ‖a i - 0‖ := by
                 simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using
-                  (norm_add_le (thicknessAt Pi E (φ i) - a i) (a i - 0))
+                  (norm_add_le (thicknessAt Pi E (φ i + 1) - a i) (a i - 0))
         _ ≤ ‖delta i - 0‖ + ‖a i - 0‖ := add_le_add hleft (le_rfl)
         _ = ‖a i - 0‖ + ‖delta i - 0‖ := by ring
-    have hlt : ‖thicknessAt Pi E (φ i) - 0‖ < ε := by linarith
+    have hlt : ‖thicknessAt Pi E (φ i + 1) - 0‖ < ε := by linarith
     simpa using hlt
   intro ε hε
   rcases htransfer ε hε with ⟨N, hN⟩
-  refine ⟨φ N, ?_⟩
+  refine ⟨φ N + 1, ?_⟩
   intro t ht
   have hmonoPi := thicknessAt_antitone (P := Pi) (E := E)
-  have hle : thicknessAt Pi E t ≤ thicknessAt Pi E (φ N) := hmonoPi ht
-  have hbase : ‖thicknessAt Pi E (φ N) - 0‖ < ε := hN N le_rfl
-  have hbase' : thicknessAt Pi E (φ N) < ε := by
-    have hnonneg : 0 ≤ thicknessAt Pi E (φ N) := thicknessAt_nonneg (P := Pi) (E := E) (t := φ N)
-    have habs : |thicknessAt Pi E (φ N)| < ε := by simpa [Real.norm_eq_abs] using hbase
+  have hle : thicknessAt Pi E t ≤ thicknessAt Pi E (φ N + 1) := hmonoPi ht
+  have hbase : ‖thicknessAt Pi E (φ N + 1) - 0‖ < ε := hN N le_rfl
+  have hbase' : thicknessAt Pi E (φ N + 1) < ε := by
+    have hnonneg : 0 ≤ thicknessAt Pi E (φ N + 1) := thicknessAt_nonneg Pi E (φ N + 1)
+    have habs : |thicknessAt Pi E (φ N + 1)| < ε := by simpa [Real.norm_eq_abs] using hbase
     exact (abs_lt.mp habs).2
   have hnonneg_t : 0 ≤ thicknessAt Pi E t := thicknessAt_nonneg (P := Pi) (E := E) t
   have ht_lt : thicknessAt Pi E t < ε := lt_of_le_of_lt hle hbase'

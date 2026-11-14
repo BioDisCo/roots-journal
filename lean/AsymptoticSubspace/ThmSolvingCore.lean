@@ -1,6 +1,7 @@
 -- Internal plumbing module.
 -- Reader-facing statement is in `ThmSolving.lean`.
 import AsymptoticSubspace.LemDeltaContraction
+import AsymptoticSubspace.NestedHulls
 
 noncomputable section
 
@@ -39,124 +40,100 @@ lemma proj_dist_le_thickness_of_mem_poly [NeZero n]
       symm
       exact thicknessAt_eq (P := Pi) (E := E) (t := t) hXt
 
-lemma dist_proj_outputs_le_thickness [NeZero n]
-    (Pi : V →L[ℝ] V)
-    (E : AveragingExecution (V := V) n)
-    (t s : Round)
-    (i j : Proc n)
-    (hts : t ≤ s) :
-    dist (Pi (E.outputs s i)) (Pi (E.outputs t j)) ≤ thicknessAt Pi E t := by
-  have hs_mem_poly_t :
-      E.outputs s i ∈ Poly E t := by
-    exact (poly_antitone (E := E) hts) (output_mem_poly_self (E := E) s i)
-  have ht_mem_poly_t :
-      E.outputs t j ∈ Poly E t :=
-    output_mem_poly_self (E := E) t j
-  exact proj_dist_le_thickness_of_mem_poly (Pi := Pi) (E := E) (t := t) hs_mem_poly_t ht_mem_poly_t
-
 end ProjectionHelpers
 
 section ProjectedLimit
 
 variable [DecidableEq V]
 
-lemma projected_ref_cauchy [NeZero n]
-    (Pi : V →L[ℝ] V)
-    (E : AveragingExecution (V := V) n)
-    (i0 : Proc n)
+/-- The diameter of the projected hull is exactly the thickness of the outputs. -/
+lemma projected_poly_diam [NeZero n]
+    (Pi : V →L[ℝ] V) (E : AveragingExecution (V := V) n) (t : Round) :
+    Metric.diam (Pi '' Poly E t) = thicknessAt Pi E t := by
+  have hcompact := (poly_compact E t).image Pi.continuous
+  apply le_antisymm
+  · apply Metric.diam_le_of_forall_dist_le (thicknessAt_nonneg Pi E t)
+    rintro _ ⟨x, hx, rfl⟩ _ ⟨y, hy, rfl⟩
+    exact proj_dist_le_thickness_of_mem_poly Pi E t hx hy
+  · rw [thicknessAt_eq Pi E t (outputSet_nonempty E t)]
+    apply Finset.sup'_le
+    rintro ⟨x, y⟩ hxy
+    obtain ⟨hx, hy⟩ := Finset.mem_product.mp hxy
+    obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp hx
+    obtain ⟨j, _, rfl⟩ := Finset.mem_image.mp hy
+    simpa [dist_eq_norm, map_sub] using
+      Metric.dist_le_diam_of_mem hcompact.isBounded
+        (mem_image_of_mem Pi (output_mem_poly_self E t i))
+        (mem_image_of_mem Pi (output_mem_poly_self E t j))
+
+/-- The nonempty nested projected hulls have a singleton intersection when
+their diameters tend to zero. The point belongs to every projected hull. -/
+lemma projected_poly_inter_eq_singleton [NeZero n]
+    (Pi : V →L[ℝ] V) (E : AveragingExecution (V := V) n)
     (hthick : ConvergesTo (fun t => thicknessAt Pi E t) 0) :
-    CauchySeq (fun t => Pi (E.outputs t i0)) := by
-  rw [Metric.cauchySeq_iff]
+    ∃ c : V, (⋂ t, Pi '' Poly E t) = {c} := by
+  have hcompact (t) : IsCompact (Pi '' Poly E t) :=
+    (poly_compact E t).image Pi.continuous
+  obtain ⟨c, hc⟩ := IsCompact.nonempty_iInter_of_sequence_nonempty_isCompact_isClosed
+    (fun t => Pi '' Poly E t)
+    (fun t => image_mono (poly_succ_subset E t))
+    (fun t => ⟨Pi (E.outputs t 0), mem_image_of_mem Pi (output_mem_poly_self E t 0)⟩)
+    (hcompact 0) (fun t => (hcompact t).isClosed)
+  refine ⟨c, Set.eq_singleton_iff_unique_mem.mpr ⟨hc, ?_⟩⟩
+  intro x hx
+  apply dist_eq_zero.mp
+  apply le_antisymm ?_ dist_nonneg
+  apply le_of_forall_pos_le_add
   intro ε hε
-  rcases hthick ε hε with ⟨T, hT⟩
-  refine ⟨T, ?_⟩
-  intro m hm n hn
-  rcases le_total m n with hmn | hnm
-  · have hdist :
-        dist (Pi (E.outputs n i0)) (Pi (E.outputs m i0))
-          ≤ thicknessAt Pi E m :=
-      dist_proj_outputs_le_thickness (Pi := Pi) (E := E) (t := m) (s := n) (i := i0) (j := i0) hmn
-    have hlt : thicknessAt Pi E m < ε := by
-      have hnorm : ‖thicknessAt Pi E m - 0‖ < ε := hT m hm
-      have habs : |thicknessAt Pi E m| < ε := by
-        simpa [Real.norm_eq_abs] using hnorm
-      have hnonneg : 0 ≤ thicknessAt Pi E m := thicknessAt_nonneg (P := Pi) (E := E) m
-      simpa [abs_of_nonneg hnonneg] using habs
-    exact lt_of_le_of_lt (by simpa [dist_comm] using hdist) hlt
-  · have hdist :
-        dist (Pi (E.outputs m i0)) (Pi (E.outputs n i0))
-          ≤ thicknessAt Pi E n :=
-      dist_proj_outputs_le_thickness (Pi := Pi) (E := E) (t := n) (s := m) (i := i0) (j := i0) hnm
-    have hlt : thicknessAt Pi E n < ε := by
-      have hnorm : ‖thicknessAt Pi E n - 0‖ < ε := hT n hn
-      have habs : |thicknessAt Pi E n| < ε := by
-        simpa [Real.norm_eq_abs] using hnorm
-      have hnonneg : 0 ≤ thicknessAt Pi E n := thicknessAt_nonneg (P := Pi) (E := E) n
-      simpa [abs_of_nonneg hnonneg] using habs
-    exact lt_of_le_of_lt hdist hlt
+  obtain ⟨T, hT⟩ := hthick ε hε
+  have hdist := Metric.dist_le_diam_of_mem (hcompact T).isBounded
+    (mem_iInter.mp hx T) (mem_iInter.mp hc T)
+  rw [projected_poly_diam] at hdist
+  have hsmall := hT T le_rfl
+  have : thicknessAt Pi E T < ε := by
+    simpa [Real.norm_eq_abs, abs_of_nonneg (thicknessAt_nonneg Pi E T)] using hsmall
+  simpa using (hdist.trans this.le)
 
-lemma projected_ref_exists_limit [NeZero n] [CompleteSpace V]
-    (Pi : V →L[ℝ] V)
-    (E : AveragingExecution (V := V) n)
-    (i0 : Proc n)
-    (hthick : ConvergesTo (fun t => thicknessAt Pi E t) 0) :
-    ∃ cstar : V, ConvergesTo (fun t => Pi (E.outputs t i0)) cstar := by
-  have hcauchy :
-      CauchySeq (fun t => Pi (E.outputs t i0)) :=
-    projected_ref_cauchy (Pi := Pi) (E := E) (i0 := i0) hthick
-  rcases cauchySeq_tendsto_of_complete hcauchy with ⟨cstar, hcstar⟩
-  exact ⟨cstar, convergesTo_of_tendsto (x := fun t => Pi (E.outputs t i0)) (l := cstar) hcstar⟩
-
-lemma projected_all_converge_to_ref_limit [NeZero n]
-    (Pi : V →L[ℝ] V)
-    (E : AveragingExecution (V := V) n)
-    (i0 : Proc n)
-    (cstar : V)
-    (hthick : ConvergesTo (fun t => thicknessAt Pi E t) 0)
-    (hconvRef : ConvergesTo (fun t => Pi (E.outputs t i0)) cstar) :
-    ∀ i : Proc n, ConvergesTo (fun t => Pi (E.outputs t i)) cstar := by
-  intro i ε hε
-  have hε2 : 0 < ε / 2 := by linarith
-  rcases hthick (ε / 2) hε2 with ⟨T1, hT1⟩
-  rcases hconvRef (ε / 2) hε2 with ⟨T2, hT2⟩
-  refine ⟨max T1 T2, ?_⟩
-  intro t ht
-  have ht1 : T1 ≤ t := le_trans (le_max_left T1 T2) ht
-  have ht2 : T2 ≤ t := le_trans (le_max_right T1 T2) ht
-  have hthick_lt : thicknessAt Pi E t < ε / 2 := by
-    have hnorm : ‖thicknessAt Pi E t - 0‖ < ε / 2 := hT1 t ht1
-    have habs : |thicknessAt Pi E t| < ε / 2 := by
-      simpa [Real.norm_eq_abs] using hnorm
-    have hnonneg : 0 ≤ thicknessAt Pi E t := thicknessAt_nonneg (P := Pi) (E := E) t
-    simpa [abs_of_nonneg hnonneg] using habs
-  have href_lt : ‖Pi (E.outputs t i0) - cstar‖ < ε / 2 := by
-    simpa using hT2 t ht2
-  have hpair_le :
-      dist (Pi (E.outputs t i)) (Pi (E.outputs t i0)) ≤ thicknessAt Pi E t :=
-    dist_proj_outputs_le_thickness (Pi := Pi) (E := E) (t := t) (s := t) (i := i) (j := i0)
-      le_rfl
-  have hpair_lt : dist (Pi (E.outputs t i)) (Pi (E.outputs t i0)) < ε / 2 :=
-    lt_of_le_of_lt hpair_le hthick_lt
-  have href_dist : dist (Pi (E.outputs t i0)) cstar < ε / 2 := by
-    simpa [dist_eq_norm] using href_lt
-  have htri :
-      dist (Pi (E.outputs t i)) cstar
-        ≤ dist (Pi (E.outputs t i)) (Pi (E.outputs t i0))
-          + dist (Pi (E.outputs t i0)) cstar :=
-    dist_triangle _ _ _
-  have hdist_lt : dist (Pi (E.outputs t i)) cstar < ε := by
-    linarith
-  simpa [dist_eq_norm] using hdist_lt
+omit [DecidableEq V] in
+/-- An orthogonal projection's fiber over a point in its image is the translate
+of its kernel, and distance to that fiber is the projected distance. -/
+lemma projection_fiber_distance [FiniteDimensional ℝ V]
+    (K : Submodule ℝ V) (c : V) (hc : K.starProjection c = c) :
+    let W := AffineSubspace.mk' c (LinearMap.ker (K.starProjection : V →ₗ[ℝ] V))
+    (W : Set V) = {x | K.starProjection x = c} ∧
+      ∀ x, Metric.infDist x (W : Set V) = ‖K.starProjection x - c‖ := by
+  dsimp only
+  let W := AffineSubspace.mk' c (LinearMap.ker (K.starProjection : V →ₗ[ℝ] V))
+  have hfiber : (W : Set V) = {x | K.starProjection x = c} := by
+    ext x
+    change K.starProjection (x - c) = 0 ↔ K.starProjection x = c
+    rw [map_sub, hc, sub_eq_zero]
+  refine ⟨hfiber, fun x => le_antisymm ?_ ?_⟩
+  · let w := x - K.starProjection x + c
+    have hw : w ∈ W := by
+      change w ∈ (W : Set V)
+      rw [hfiber]
+      change K.starProjection (x - K.starProjection x + c) = c
+      rw [map_add, map_sub, hc, K.starProjection_eq_self_iff.mpr
+        (K.starProjection_apply_mem x), sub_self, zero_add]
+    calc
+      Metric.infDist x (W : Set V) ≤ dist x w := Metric.infDist_le_dist_of_mem hw
+      _ = ‖K.starProjection x - c‖ := by
+        rw [dist_eq_norm]
+        congr 1
+        dsimp [w]
+        abel
+  · apply (Metric.le_infDist ⟨c, by rw [hfiber]; exact hc⟩).mpr
+    intro y hy
+    have hy' : K.starProjection y = c := by
+      change y ∈ (W : Set V) at hy
+      rwa [hfiber] at hy
+    simpa [dist_eq_norm, map_sub, hy'] using K.norm_starProjection_apply_le (x - y)
 
 end ProjectedLimit
 
-/--
-TeX label: `thm:solving` (full model-grounded form).
-
-For `d ≥ k ≥ 1`, every averaging execution with minimum broadcasting weight `α > 0`
-and `k`-broadcastability converges onto a fixed affine subspace of dimension at most `k-1`,
-and satisfies validity at limit.
--/
+/-- Theorem 13: shrinking projected hulls give convergence to an affine subspace
+of dimension at most `k - 1`. The public theorem enlarges it to exact dimension. -/
 theorem theorem_solving_core [NeZero n]
     [FiniteDimensional ℝ V]
     (d k : Nat) (_hdk : k ≤ d) (hk : 1 ≤ k)
@@ -184,50 +161,33 @@ theorem theorem_solving_core [NeZero n]
     simpa [Pi] using hkerPi0
   have hthick : ConvergesTo (fun t => thicknessAt Pi E t) 0 := by
     simpa [Pi] using hthick0
-  let i0 : Proc n := ⟨0, Nat.pos_of_ne_zero (NeZero.ne n)⟩
-  rcases projected_ref_exists_limit (Pi := Pi) (E := E) (i0 := i0) hthick with
-    ⟨cstar, hconvRef⟩
-  have hconvProj :
-      ∀ i : Proc n, ConvergesTo (fun t => Pi (E.outputs t i)) cstar :=
-    projected_all_converge_to_ref_limit
-      (Pi := Pi) (E := E) (i0 := i0) (cstar := cstar) hthick hconvRef
-  let W : AffineSubspace ℝ V := AffineSubspace.mk' cstar (LinearMap.ker (Pi : V →ₗ[ℝ] V))
-  refine ⟨W, ?_, ?_, averaging_validityAtLimit (V := V) (n := n) E⟩
+  obtain ⟨c, hc⟩ := projected_poly_inter_eq_singleton Pi E hthick
+  have hc_mem (t) : c ∈ Pi '' Poly E t := by
+    apply mem_iInter.mp (show c ∈ ⋂ t, Pi '' Poly E t from by rw [hc]; simp) t
+  have hPc : Pi c = c := by
+    obtain ⟨x, _, hx⟩ := hc_mem 0
+    rw [← hx]
+    exact K.starProjection_eq_self_iff.mpr (K.starProjection_apply_mem x)
+  let W := AffineSubspace.mk' c (LinearMap.ker (Pi : V →ₗ[ℝ] V))
+  obtain ⟨hfiber, hdist⟩ := projection_fiber_distance K c hPc
+  refine ⟨W, ?_, ?_, averaging_validityAtLimit E⟩
   · have hWdir : W.direction = LinearMap.ker (Pi : V →ₗ[ℝ] V) := by
       simp [W, AffineSubspace.direction_mk']
     rw [hWdir]
     exact hkerPi
   · intro i
-    refine ⟨?_, ?_⟩
-    · refine ⟨cstar, ?_⟩
-      simp [W]
-    · intro ε hε
-      rcases hconvProj i ε hε with ⟨T, hT⟩
-      refine ⟨T, ?_⟩
-      intro t ht
-      have hproj_lt : ‖Pi (E.outputs t i) - cstar‖ < ε := hT t ht
-      let w : V := (E.outputs t i - Pi (E.outputs t i)) + cstar
-      have hker_eq :
-          LinearMap.ker (Pi : V →ₗ[ℝ] V) = Kᗮ := by
-        simp [Pi]
-      have horth : E.outputs t i - Pi (E.outputs t i) ∈ Kᗮ := by
-        simp [Pi]
-      have hw_mem : w ∈ W := by
-        change w - cstar ∈ LinearMap.ker (Pi : V →ₗ[ℝ] V)
-        rw [hker_eq]
-        have hwsub : w - cstar = E.outputs t i - Pi (E.outputs t i) := by
-          simp [w, sub_eq_add_neg, add_left_comm, add_comm]
-        simpa [hwsub] using horth
-      have hinf_le :
-          Metric.infDist (E.outputs t i) (W : Set V) ≤ dist (E.outputs t i) w :=
-        Metric.infDist_le_dist_of_mem hw_mem
-      have hdist_eq : dist (E.outputs t i) w = ‖Pi (E.outputs t i) - cstar‖ := by
-        have hsub : E.outputs t i - w = Pi (E.outputs t i) - cstar := by
-          simp [w, sub_eq_add_neg, add_left_comm, add_comm]
-        simp [dist_eq_norm, hsub]
-      have hdist_lt : dist (E.outputs t i) w < ε := by
-        simpa [hdist_eq] using hproj_lt
-      exact lt_of_le_of_lt hinf_le hdist_lt
+    refine ⟨⟨c, by simp [W]⟩, ?_⟩
+    intro ε hε
+    obtain ⟨T, hT⟩ := hthick ε hε
+    refine ⟨T, fun t ht => ?_⟩
+    have hbound : ‖Pi (E.outputs t i) - c‖ ≤ thicknessAt Pi E t := by
+      rw [← projected_poly_diam]
+      simpa only [dist_eq_norm] using
+        Metric.dist_le_diam_of_mem ((poly_compact E t).image Pi.continuous).isBounded
+        (mem_image_of_mem Pi (output_mem_poly_self E t i)) (hc_mem t)
+    rw [hdist]
+    exact hbound.trans_lt (by
+      simpa [Real.norm_eq_abs, abs_of_nonneg (thicknessAt_nonneg Pi E t)] using hT t ht)
 
 end ThmSolving
 end AsymptoticSubspace
