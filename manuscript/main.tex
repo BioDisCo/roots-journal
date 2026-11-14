@@ -197,10 +197,28 @@ Multidimensional $\varepsilon$-consensus has also been studied in the context of
 Via a reduction to dynamic networks, Függer and Nowak \cite{FN18:disc} showed that this dependency can be dropped, with the convergence rate of asymptotic consensus and the termination time in $\varepsilon$-consensus being independent of~$d$ for certain averaging algorithms.
 Approximate consensus was also investigated in non-synchronous settings \cite{attiya2023step,ghinea2023multidimensional}.
 
-In this work we investigate the behavior of averaging algorithms in weaker than rooted oblivious message adversaries,
-where asymptotic consensus is not necessarily solvable.
-This is motivated by an understanding of how averaging algorithms degrade in non-rooted oblivious message adversaries,
-and by the hypothesis that some applications may not require convergence to a single value.
+Repeated averaging has also been studied in opinion dynamics.
+Bolouki and Malham\'e~\cite{BoloukiMalhame2016} studied conditions under which
+  scalar opinions converge under repeated averaging, possibly to different limits for
+  different processes.
+While opinions are scalar, their geometric analysis uses vectors of cumulative
+  influence weights in $\IR^n$, where $n$ is the number of processes.
+These vectors are the rows of products of averaging matrices,
+  with each entry describing how much one process's initial opinion contributes
+  to another process's opinion at a later time.
+The authors show that the convex hulls of these vectors form a nested sequence that
+  converges to a limiting polyhedron.
+Bolouki, Malham\'e, Siami, and Motee~\cite{BoloukiEtAl2017} studied whether,
+  given the initial opinions of the other individuals, a selected group can choose its
+  own initial opinions so that all individuals converge to a prescribed opinion.
+They relate the smallest size of such a group to the number of vertices of the
+  limiting polyhedron of influence vectors.
+
+In this work we investigate the behavior of averaging algorithms in weaker than
+  rooted oblivious message adversaries, where asymptotic consensus is not necessarily solvable.
+This is motivated by an understanding of how averaging algorithms degrade in
+  non-rooted oblivious message adversaries, and by the hypothesis that some applications
+  may not require convergence to a single value.
 
 
 \paragraph*{Results and outline}
