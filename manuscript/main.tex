@@ -195,18 +195,24 @@ Algorithms based on this scheme were shown to be asymptotically optimal by F{\"u
 Averaging algorithms naturally generalize to dimensions $d > 1$, with the same characterization of solvability for asymptotic and $\varepsilon$-consensus, and the main challenge being high convergence rates despite large dimensions~\cite{CBFN16:centroid,FN18:disc}.
 Multidimensional $\varepsilon$-consensus has also been studied in the context of adversarial faults and asynchrony by Mendes, Herlihy, Vaidya, and Garg \cite{mendes15:multidimensional} with a time to reach $\varepsilon$-consensus that depends linearly on~$d$.
 Via a reduction to dynamic networks, Függer and Nowak \cite{FN18:disc} showed that this dependency can be dropped, with the convergence rate of asymptotic consensus and the termination time in $\varepsilon$-consensus being independent of~$d$ for certain averaging algorithms.
+Melnyk~\cite{Melnyk2026:balls} improved contraction bounds for multidimensional approximate consensus in Byzantine systems using smallest enclosing balls, and Aab, Melnyk, and Schmid~\cite{AabEtAl2026} adapted this approach to non-split dynamic networks.
 Approximate consensus was also investigated in non-synchronous settings \cite{attiya2023step,ghinea2023multidimensional}.
+Ghinea, Melnyk, and Milentijevi\'c~\cite{GhineaEtAl2026} established optimal resilience bounds for multidimensional approximate consensus when the communication system is synchronous or asynchronous and not known in advance.
+
+Cambus, Melnyk, Milentijevi\'c, and Schmid~\cite{CambusEtAl2025} studied multidimensional approximate consensus with a relaxed validity condition in Byzantine collaborative learning, and Cambus and Melnyk~\cite{CambusMelnyk2026} studied distributed approximation of the centroid, i.e., the exact average, of the non-faulty inputs.
+For exact consensus with convex-hull validity, Dufay, Ghinea, and Paramonov~\cite{DufayEtAl2026} obtained synchronous protocols with near-optimal communication complexity when the bit length of the inputs is sufficiently large.
 
 Repeated averaging has also been studied in opinion dynamics.
 Bolouki and Malham\'e~\cite{BoloukiMalhame2016} studied conditions under which
   scalar opinions converge under repeated averaging, possibly to different limits for
   different processes.
-While opinions are scalar, their geometric analysis uses vectors of cumulative
-  influence weights in $\IR^n$, where $n$ is the number of processes.
+While opinions are scalar, the analysis of such algorithms is related to multidimensional
+  averaging, where the authors use vectors of cumulative
+  influence weights in $\IR^n$, with $n$ being the number of processes.
 These vectors are the rows of products of averaging matrices,
   with each entry describing how much one process's initial opinion contributes
   to another process's opinion at a later time.
-The authors show that the convex hulls of these vectors form a nested sequence that
+The authors show that the convex hulls of the vectors form a nested sequence that
   converges to a limiting polyhedron.
 Bolouki, Malham\'e, Siami, and Motee~\cite{BoloukiEtAl2017} studied whether,
   given the initial opinions of the other individuals, a selected group can choose its
