@@ -1,0 +1,5 @@
+Asymptotic subspace consensus: outputs converge onto a common affine subspace
+Solvable exactly in (s+1)-rooted oblivious message adversaries
+Averaging algorithms solve the problem whenever it is solvable
+The limit convex hull of the outputs has at most s+1 vertices
+All theorems and lemmas come with machine-checked proofs in Lean 4

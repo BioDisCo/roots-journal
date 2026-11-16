@@ -1,0 +1,438 @@
+% disclosure-appendix.tex: Lean model disclosure appendix for
+% "Asymptotic Subspace Consensus in Dynamic Networks".
+%
+% Completeness iterations: 4. Each iteration ran an independent pass that read
+% only main.tex and the Lean sources, never this appendix, and listed the encoding
+% commitments it found; every commitment a pass reported and this appendix did not
+% state was then added. The fourth pass reported three, which this appendix now states
+% (solvability defined for this specification only, minimum broadcasting weight defined
+% for all update steps at once, and the independence of convergence from the norm in
+% finite dimension). A fifth pass, which the procedure needs in order to terminate with
+% nothing new found, did not complete: six audit runs stopped in the agent runtime
+% without producing a report. This appendix is therefore the state after four passes,
+% not a verified fixed point.
+%
+% Include after \appendix with \input{disclosure-appendix}. The file relies on the
+% paper's preamble: fancyvrb (loaded by apxproof), hyperref, amssymb, and \leanurl.
+% Unicode characters of the Lean listings are mapped to math symbols inside the group.
+\begingroup
+\makeatletter
+\def\leanuc#1#2{\expandafter\def\csname u8:\detokenize{#1}\endcsname{\ensuremath{#2}}}
+\makeatother
+\leanuc{¬}{\neg}
+\leanuc{·}{\cdot}
+\leanuc{×}{\times}
+\leanuc{α}{\alpha}
+\leanuc{ε}{\varepsilon}
+\leanuc{ξ}{\xi}
+\leanuc{ᗮ}{^{\perp}}
+\leanuc{‖}{\|}
+\leanuc{•}{\bullet}
+\leanuc{₊}{{}_{+}}
+\leanuc{ℕ}{\mathbb{N}}
+\leanuc{ℝ}{\mathbb{R}}
+\leanuc{→}{\to}
+\leanuc{↔}{\leftrightarrow}
+\leanuc{∀}{\forall}
+\leanuc{∃}{\exists}
+\leanuc{∅}{\emptyset}
+\leanuc{∈}{\in}
+\leanuc{∑}{\sum}
+\leanuc{∞}{\infty}
+\leanuc{∧}{\wedge}
+\leanuc{∫}{\int}
+\leanuc{≤}{\le}
+\leanuc{≥}{\ge}
+\leanuc{⊤}{\top}
+\leanuc{⌈}{\lceil}
+\leanuc{⌉}{\rceil}
+\leanuc{⟨}{\langle}
+\leanuc{⟩}{\rangle}
+\DefineVerbatimEnvironment{leancode}{Verbatim}{fontsize=\scriptsize,baselinestretch=0.92}
+\sloppy
+\newcommand{\leanunderscore}{\textunderscore\allowbreak}
+\newcommand{\lean}[1]{{\let\_\leanunderscore\texttt{#1}}}
+\newcommand{\leanfile}[1]{\par\noindent{\scriptsize\href{\leanurl{#1}}{\texttt{#1}}}\par}
+\newcommand{\leanref}[1]{\href{\leanurl{#1}}{\lean{#1}}}
+\newenvironment{leanlisting}{\par\smallskip\begingroup\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}\setlength{\parskip}{0pt}}{\endgroup\smallskip\par}
+
+\section{Lean Encoding of the Model}\label{app:lean-model}
+
+This appendix documents the Lean encoding of the paper's model. Type checking guarantees that the proofs follow from the definitions; the adequacy of the definitions themselves is not machine-checkable. The encoding choices are stated below.
+
+The definitions covered are those on which the statements of the badged results depend, closed under unfolding, together with the projection $\Pi_t$ of Definition~\ref{def:thickness}. The project uses Lean~4.27.0 and Mathlib~v4.27.0. Listings are verbatim excerpts of \lean{lean/AsymptoticSubspace/} without docstrings and without the section variables \lean{\{n : ℕ\}} and \lean{\{V : Type*\}} with its normed or inner product structure.
+
+\subsection{Communication model}\label{app:lean-communication}
+
+Section~\ref{sec:model} has $n>1$ processes, synchronous rounds $t\in\IN$ with directed graphs $G_t=([n],E_t)$ that contain all self-loops, oblivious message adversaries as non-empty sets of graphs, $k$-rooted (respectively $k$-broadcastable) graphs, in which a set of at most $k$ processes reaches (respectively has an edge to) every process, and the product $G_1\circ G_2$ with edge $(i,j)$ if and only if $(i,u)\in E_1$ and $(u,j)\in E_2$ for some~$u$.
+
+\begin{leanlisting}
+\leanfile{ComputationalModelCore.lean}
+\begin{leancode}
+abbrev Round := Nat
+abbrev Proc (n : Nat) := Fin n
+structure CommGraph (n : Nat) where
+  edge : Proc n → Proc n → Prop
+  self_loop : ∀ i : Proc n, edge i i
+def Reachable {n : Nat} (G : CommGraph n) : Proc n → Proc n → Prop :=
+  Relation.ReflTransGen G.edge
+def IsRootSet {n : Nat} (G : CommGraph n) (R : Finset (Proc n)) : Prop :=
+  ∀ i : Proc n, ∃ j : Proc n, j ∈ R ∧ Reachable G j i
+def IsKRooted {n : Nat} (G : CommGraph n) (k : Nat) : Prop :=
+  ∃ R : Finset (Proc n), R.card ≤ k ∧ IsRootSet G R
+structure ObliviousMessageAdversary (n : Nat) where
+  graphs : Set (CommGraph n)
+  nonempty : graphs.Nonempty
+def IsKRootedAdversary {n : Nat} (N : ObliviousMessageAdversary n) (k : Nat) : Prop :=
+  ∀ G : CommGraph n, G ∈ N.graphs → IsKRooted G k
+def IsBroadcastingSet (G : CommGraph n) (M : Finset (Proc n)) : Prop :=
+  ∀ i : Proc n, ∃ j : Proc n, j ∈ M ∧ G.edge j i
+\end{leancode}
+\leanfile{GraphProducts.lean}
+\begin{leancode}
+def IsKBroadcastable (G : CommGraph n) (k : ℕ) : Prop :=
+  ∃ R : Finset (Proc n), R.card ≤ k ∧ IsBroadcastingSet G R
+def CommGraph.comp (G H : CommGraph n) : CommGraph n where
+  edge i j := ∃ m, G.edge i m ∧ H.edge m j
+  self_loop i := ⟨i, G.self_loop i, H.self_loop i⟩
+def CommGraph.id (n : ℕ) : CommGraph n where
+  edge i j := i = j
+  self_loop _ := rfl
+def graphProduct (G : Round → CommGraph n) (start : Round) : ℕ → CommGraph n
+  | 0 => CommGraph.id n
+  | len + 1 => (graphProduct G start len).comp (G (start + len + 1))
+\end{leancode}
+\leanfile{ExternalGraphBound.lean}
+\begin{leancode}
+def linearBroadcastRounds (n : ℕ) : ℕ :=
+  ⌈((Real.pi ^ 2 + 6) / 6) * (n : ℝ) + 1⌉₊
+\end{leancode}
+\end{leanlisting}
+
+Rounds are \lean{Nat}, and processes are \lean{Fin n}, named $0,\dots,n-1$; $n$ is any natural number. A graph is a \lean{Prop}-valued relation with all self-loops present, and \lean{G.edge j i} is the edge from $j$ to $i$. Edges are not decidable, and definitions that test them use classical logic. Graphs without self-loops are not representable, and graphs with equal edge relations are equal. Reachability is the reflexive transitive closure of \lean{edge}, so each process reaches itself and each member of a root set is reached from that set. Root sets and broadcasting sets are finsets bounded by \lean{R.card ≤ k} with $k\in\IN_0$; for $n\geq1$ no graph is $0$-rooted, and for $k\geq n$ every graph is $k$-rooted and $k$-broadcastable. A broadcasting set needs an edge to each of its own members, which the self-loops provide, and for $n\geq1$ it is nonempty. An adversary is a \lean{Set} of graphs with a nonemptiness proof. No predicate defines $k$-broadcastable adversaries; statements assume a broadcasting set of size at most $k$ in each round of an execution (Section~\ref{app:lean-averaging}). \lean{graphProduct G start len} is $G_{\mathit{start}+1}\circ\cdots\circ G_{\mathit{start}+\mathit{len}}$ in temporal order, and the product of length zero is the graph \lean{CommGraph.id n} of self-loops. A product of a list of graphs is thus a window of a single sequence. \lean{linearBroadcastRounds n} is the natural number $\lceil(\pi^2+6)n/6+1\rceil$, the least integer that is at least the bound of Theorem~\ref{thm:rooted:to:broadcastable}, and the block length $L$ of Corollary~\ref{cor:bound}.
+
+\subsection{Algorithms and executions}\label{app:lean-algorithms}
+
+In Section~\ref{sec:model}, each process in each round sends a message, receives those of its incoming neighbors, and deterministically updates its local state, which includes its output; initial states and graphs determine the execution.
+
+\begin{leanlisting}
+\leanfile{StatefulAlgorithms.lean}
+\begin{leancode}
+structure StatefulAlgorithm (V : Type*) (n : ℕ) (State : Type*) where
+  initialState : Proc n → V → State
+  step : Round → CommGraph n → (Proc n → State) → Proc n → State
+  output : Round → Proc n → State → V
+  output_initial : ∀ i x, output 0 i (initialState i x) = x
+  locality : ∀ t G H x y i,
+    (∀ j, G.edge j i ↔ H.edge j i) →
+    (∀ j, G.edge j i → x j = y j) → step t G x i = step t H y i
+def runState (G : Round → CommGraph n) (init : Proc n → V) : Round → Proc n → State
+  | 0 => fun i => A.initialState i (init i)
+  | t + 1 => fun i => A.step (t + 1) (G (t + 1)) (runState G init t) i
+def run (G : Round → CommGraph n) (init : Proc n → V) (t : Round) (i : Proc n) : V :=
+  A.output t i (A.runState G init t i)
+\end{leancode}
+\leanfile{PaperComputationalModel.lean}
+\begin{leancode}
+abbrev Algorithm (V : Type*) (n : ℕ) (State : Type*) := StatefulAlgorithm V n State
+\end{leancode}
+\leanfile{ComputationalModelCore.lean}
+\begin{leancode}
+def AdmissibleTrace
+    {n : Nat} (N : ObliviousMessageAdversary n) (Gseq : Round → CommGraph n) : Prop :=
+  ∀ t : Round, Gseq t ∈ N.graphs
+\end{leancode}
+\leanfile{ActualRounds.lean}
+\begin{leancode}
+def AdmissibleActualTrace (N : ObliviousMessageAdversary n) (G : Round → CommGraph n) : Prop :=
+  ∀ t, 0 < t → G t ∈ N.graphs
+\end{leancode}
+\end{leanlisting}
+
+An algorithm has an arbitrary state type \lean{State}, which the characterization takes in the universe of \lean{V}. Messages have no type of their own: \lean{step t G x i} receives the round number, the whole graph and all states, and \lean{locality} restricts its dependence to the incoming neighborhood of \lean{i} and the states of those neighbors, \lean{x i} included. A process thus receives the full previous state of each incoming neighbor, of which any message is a function, together with the identity of each sender and the set of its incoming neighbors; what a sender transmits is the same for all its outgoing neighbors and has no size bound. Processes know their own identity, the round number and $n$, and updates are deterministic. The initial state depends only on the identity and the process's own input, so other initial states are not expressible, and \lean{output\_initial} makes the round-$0$ output equal to the input. The output is a function \lean{output t i s} of round, identity and state, not a component of the state. \lean{runState} computes round $t+1$ with \lean{G (t + 1)}, so communication rounds are $t\geq1$, executions are infinite, and \lean{G 0} is never read. \lean{AdmissibleTrace} also constrains \lean{G 0}, and \lean{AdmissibleActualTrace} constrains $t>0$ only; since \lean{N.graphs} is nonempty, both admit the same runs. Traces are arbitrary sequences of graphs of the adversary, independent of the execution.
+
+\subsection{Problem specification}\label{app:lean-problem}
+
+In Section~\ref{sec:problem}, $d$-to-$s$-dimensional asymptotic subspace consensus, for $d>s$, requires in every execution that all output sequences converge onto a common affine subspace of dimension $s$ (Subspace Agreement) and onto the convex hull of the initial vectors (Validity), where $x(t)$ converges onto $X$ if $\dist(x(t),X)\to0$.
+
+\begin{leanlisting}
+\leanfile{ComputationalModelCore.lean}
+\begin{leancode}
+def ConvergesTo {V : Type*} [NormedAddCommGroup V] (x : Round → V) (l : V) : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ T : Round, ∀ t : Round, T ≤ t → ‖x t - l‖ < ε
+def ConvergesToSet {V : Type*} [NormedAddCommGroup V] (x : Round → V) (S : Set V) : Prop :=
+  S.Nonempty ∧
+    (∀ ε : ℝ, 0 < ε → ∃ T : Round, ∀ t : Round, T ≤ t → Metric.infDist (x t) S < ε)
+\end{leancode}
+\leanfile{StatefulAlgorithms.lean}
+\begin{leancode}
+def StatefulSolves {State : Type*} (A : StatefulAlgorithm V n State)
+    (N : ObliviousMessageAdversary n) (s : ℕ) : Prop :=
+  ∀ (G : Round → CommGraph n) (init : Proc n → V), AdmissibleTrace N G →
+    ∃ E : AffineSubspace ℝ V, FiniteDimensional ℝ E.direction ∧
+      Module.finrank ℝ E.direction ≤ s ∧
+      (∀ i, ConvergesToSet (fun t => A.run G init t i) (E : Set V)) ∧
+      (∀ i, ConvergesToSet (fun t => A.run G init t i) (convexHull ℝ (Set.range init)))
+\end{leancode}
+\leanfile{ActualRounds.lean}
+\begin{leancode}
+def StatefulSolvesExactActualRounds {State : Type*} {n : ℕ}
+    (A : StatefulAlgorithm V n State) (N : ObliviousMessageAdversary n) (s : ℕ) : Prop :=
+  ∀ (G : Round → CommGraph n) (init : Proc n → V), AdmissibleActualTrace N G →
+    ∃ E : AffineSubspace ℝ V, Module.finrank ℝ E.direction = s ∧
+      (∀ i, ConvergesToSet (fun t => A.run G init t i) (E : Set V)) ∧
+      (∀ i, ConvergesToSet (fun t => A.run G init t i) (convexHull ℝ (Set.range init)))
+\end{leancode}
+\leanfile{PaperComputationalModel.lean}
+\begin{leancode}
+abbrev Solves {V State : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    [FiniteDimensional ℝ V] {n : ℕ} (A : Algorithm V n State)
+    (N : ComputationalModel.ObliviousMessageAdversary n) (s : ℕ) :=
+  StatefulSolvesExactActualRounds A N s
+\end{leancode}
+\end{leanlisting}
+
+The space $\IR^d$ is a real inner product space \lean{V} with \lean{[FiniteDimensional ℝ V]}, and $d$ is \lean{Module.finrank ℝ V} rather than a parameter. Euclidean $\IR^d$ is \lean{EuclideanSpace ℝ (Fin d)}; Mathlib gives \lean{Fin d → ℝ} the supremum norm. The predicates need only \lean{[NormedSpace ℝ V]}, under which the norm, and with it $\dist$, is that of an arbitrary real normed space; in finite dimension all norms are equivalent, so convergence onto a set does not depend on the choice. \lean{Solves} adds \lean{[FiniteDimensional ℝ V]}. Convergence is the $\varepsilon$-$T$ formulation over $t\in\IN_0$ with strict inequality and with \lean{Metric.infDist} as $\dist$. The conjunct \lean{S.Nonempty} is present because \lean{Metric.infDist x ∅ = 0}; under the paper's $\inf\emptyset=\infty$, no sequence converges onto $\emptyset$ either. The agreement subspace is an \lean{AffineSubspace ℝ V} of dimension \lean{Module.finrank ℝ E.direction}; the empty affine subspace has dimension $0$ and is excluded by \lean{S.Nonempty} whenever $n\geq1$. \lean{Solves} requires dimension exactly $s$ and admissibility for $t>0$; it has no finite-dimensionality conjunct, and \lean{[FiniteDimensional ℝ V]} makes every direction finite-dimensional. \lean{StatefulSolves} requires dimension at most $s$, \lean{FiniteDimensional ℝ E.direction} because \lean{Module.finrank} is $0$ in infinite dimension, and \lean{AdmissibleTrace}. For $s\leq d$, a subspace of dimension at most $s$ lies in one of dimension $s$, so both dimension requirements hold for the same algorithms. One subspace serves all processes, and it may depend on the trace and the inputs. Validity uses \lean{convexHull ℝ (Set.range init)}, and inputs are all functions \lean{Proc n → V}. The predicates are defined for every $s$: for $s>d$ \lean{Solves} fails, for $s=d$ the subspace \lean{⊤} gives agreement, and for $n=0$ the conditions on output sequences hold vacuously. Solvability in \lean{N} is \lean{∃ State A, Solves A N s}, so the algorithm may depend on \lean{N}, $s$, $n$ and \lean{V}. The encoding has no generic notion of a problem; solvability is defined for this specification only.
+
+\subsection{Averaging algorithms and minimum broadcasting weight}\label{app:lean-averaging}
+
+In Section~\ref{sec:algos}, an averaging algorithm sets $x_i(t)=\sum_{j\in[n]}w_{ij}(t)x_j(t-1)$ with nonnegative weights that sum to $1$ and vanish outside $\In_i(t)$; it is $\alpha$-safe if $w_{ij}(t)\geq\alpha>0$ ``for messages it receives, i.e., from some $j\in\In_i(t)$'', and it has minimum broadcasting weight $\alpha$ if $\sum_{j\in M(t)}w_{ij}(t)\geq\alpha$ for the broadcasting set $M(t)$ of~$G_t$.
+
+\begin{leanlisting}
+\leanfile{ComputationalModelCore.lean}
+\begin{leancode}
+structure AveragingExecution (n : Nat) where
+  graphs : Round → CommGraph n
+  weights : Round → Proc n → Proc n → ℝ
+  outputs : Round → Proc n → V
+  weights_nonneg :
+    ∀ t i j, 0 ≤ weights t i j
+  weights_support :
+    ∀ t i j, ¬ (graphs t).edge j i → weights t i j = 0
+  weights_row_sum :
+    ∀ t i, (∑ j : Proc n, weights t i j) = 1
+  update_rule :
+    ∀ t i, outputs (t + 1) i = ∑ j : Proc n, (weights (t + 1) i j) • outputs t j
+\end{leancode}
+\leanfile{ActualRounds.lean}
+\begin{leancode}
+def AlphaSafeActualRounds (E : AveragingExecution (V := V) n) (α : ℝ) : Prop :=
+  ∀ t, 0 < t → ∀ i j, (E.graphs t).edge j i → α ≤ E.weights t i j
+def MinimumBroadcastWeightActualRounds (E : AveragingExecution (V := V) n)
+    (M : Round → Finset (Proc n)) (α : ℝ) : Prop :=
+  (∀ t, 0 < t → IsBroadcastingSet (E.graphs t) (M t)) ∧
+    (∀ t, 0 < t → ∀ i, α ≤ Finset.sum (M t) (fun j => E.weights t i j))
+\end{leancode}
+\leanfile{ModelBridgeCore.lean}
+\begin{leancode}
+abbrev Values (E : AveragingExecution (V := V) n) (t : Round) : Set V :=
+  Set.range (E.outputs t)
+abbrev ValuesOn
+    (E : AveragingExecution (V := V) n) (t : Round)
+    (S : Finset (Proc n)) : Set V :=
+  E.outputs t '' (S : Set (Proc n))
+abbrev Poly (E : AveragingExecution (V := V) n) (t : Round) : Set V :=
+  convexHull ℝ (Values E t)
+abbrev PolyOn
+    (E : AveragingExecution (V := V) n) (t : Round)
+    (S : Finset (Proc n)) : Set V :=
+  convexHull ℝ (ValuesOn E t S)
+\end{leancode}
+\end{leanlisting}
+
+Averaging algorithms are not encoded as algorithms: statements quantify over \lean{AveragingExecution} records of graphs, weights \lean{weights t i j}${}=w_{ij}(t)$ and outputs that satisfy the constraints of Algorithm~\ref{alg:averaging}. The weights are arbitrary functions of round, receiver and sender, not computed from local information, so these records include the executions of every averaging algorithm and executions that no local algorithm produces. The inputs of an execution are its unconstrained outputs at round $0$. \lean{outputs (t + 1)} uses \lean{weights (t + 1)} and \lean{graphs (t + 1)}, and lemma statements write the paper's rounds $t-1$ and $t$ as \lean{t} and \lean{t + 1}, with broadcasting set \lean{M (t + 1)}. The dimensions $k-1$ and $d-1$ in statements are natural-number subtractions, which the hypotheses $1\leq k$ and $1\leq d$ keep exact. The structure also constrains the weights at $t=0$, where no update occurs; \lean{AveragingExecution.ofActualRounds} in \lean{ActualRounds.lean} fills slot $0$ with the graph and weights of round $1$ and leaves the outputs unchanged. \lean{AlphaSafeActualRounds} and \lean{MinimumBroadcastWeightActualRounds} constrain $t>0$ only and do not require $\alpha>0$, which the statements assume. \lean{AlphaSafeActualRounds} bounds the weight of every received message, the process's own included, reading ``from some $j\in\In_i(t)$'' as every $j\in\In_i(t)$; with row sums $1$ it implies $\alpha\leq1/\lvert\In_i(t)\rvert$. Adversaries do not occur in these statements. A $k$-broadcastable adversary becomes a family \lean{M : Round → Finset (Proc n)} of broadcasting sets of \lean{E.graphs t} with the separate hypothesis \lean{(M t).card ≤ k}, and a $k$-rooted adversary becomes \lean{IsKRooted (E.graphs t) k}, both for $t>0$. The statements thus cover every graph sequence that meets these conditions, in particular every admissible trace of such an adversary. The paper's ``the broadcasting set $M(t)$'' is the chosen \lean{M t}, one set for all receivers. Minimum broadcasting weight is defined for all update steps of an execution at once, and the paper's notion for a single update step has no separate definition. \lean{Values E t} is $X(t)$ as a set, and \lean{ValuesOn}, \lean{Poly} and \lean{PolyOn} are $X_S(t)$, $P(t)$ and $P_S(t)$; convex hulls are defined for all sets, and the hull of the empty set is empty.
+
+\subsection{Distances, volumes, and concave profiles}\label{app:lean-geometry}
+
+Sections~\ref{sec:problem} and~\ref{sec:converge_zero_vol} use $\dist(A,B)=\inf_{a\in A,b\in B}\lVert a-b\rVert$, the Lebesgue volume $\vol_d$, $\Sym_I(r)=\bigcup_{\xi\in I}\Ball_\xi(r(\xi))$ for measurable $r:\IR\to[0,\infty)$, $C_{d-1}=\pi^{(d-1)/2}/\Gamma(\frac{d-1}{2}+1)$, and, in Lemmas~\ref{lem:concave:line} and~\ref{lem:concave:line:zero}, the affine $f$ and $g$ with $f(b)=g(b)=r(b)$, $f(c)=r(c)$ and $g(c)=0$.
+
+\begin{leanlisting}
+\leanfile{HalfspaceZoneProofCore.lean}
+\begin{leancode}
+def setDistTo (S T : Set V) : ℝ :=
+  sInf ((fun x : V => Metric.infDist x T) '' S)
+\end{leancode}
+\leanfile{PaperFormalizationCore.lean}
+\begin{leancode}
+def diffSet (S : Set V) : Set V := {u | ∃ x ∈ S, ∃ y ∈ S, u = x - y}
+def secantLine (b c rb rc : ℝ) : ℝ → ℝ :=
+  fun ξ => ((rb - rc) / (c - b)) * (c - ξ) + rc
+def zeroLine (b c rb : ℝ) : ℝ → ℝ :=
+  fun ξ => (rb / (c - b)) * (c - ξ)
+def C_dMinusOne (d : ℕ) : ℝ :=
+  Real.rpow Real.pi ((((d - 1 : ℕ) : ℝ) / 2)) /
+    Real.Gamma ((((d - 1 : ℕ) : ℝ) / 2) + 1)
+\end{leancode}
+\leanfile{SymmetricBody.lean}
+\begin{leancode}
+def symmetricBodyOn (m : ℕ) (r : ℝ → ℝ) (a b : ℝ) :
+    Set (ℝ × EuclideanSpace ℝ (Fin m)) :=
+  {z | z.1 ∈ Icc a b ∧ z.2 ∈ Metric.closedBall 0 (r z.1)}
+\end{leancode}
+\end{leanlisting}
+
+\lean{setDistTo S T} is the real infimum over $x\in S$ of \lean{Metric.infDist x T}, which is $\dist(S,T)$ for nonempty sets and $0$ if $S$ or $T$ is empty, where the paper has $\infty$. Open half-spaces are written \lean{\{h : V | inner ℝ (h - q) v < 0\}} with $v\neq0$, and an affine hyperplane is a nonempty \lean{AffineSubspace} with \lean{Module.finrank ℝ E.direction + 1 = Module.finrank ℝ V}. \lean{diffSet S} is $\{x-y\mid x,y\in S\}$, and $\dir(X)$ is Mathlib's \lean{vectorSpan ℝ X}. $\vol_d$ is \lean{volume}, the Haar measure that Mathlib assigns to a finite-dimensional inner product space with \lean{[MeasurableSpace V] [BorelSpace V]}, normalized to $1$ on parallelepipeds of orthonormal bases; it equals Lebesgue measure on \lean{EuclideanSpace ℝ (Fin d)}, and linear isometries onto that space preserve it. Volumes lie in \lean{ℝ≥0∞}; \lean{volume.real} maps $\infty$ to $0$ and is applied to convex hulls of finite sets, which have finite volume, and \lean{ENNReal.ofReal} maps negative reals to $0$. \lean{volume} is an outer measure on all sets, so volumes of convex sets carry no measurability hypothesis. In round bounds, \lean{Real.log 0 = 0}, \lean{Nat.ceil} maps nonpositive reals to $0$, and $\lfloor t/L\rfloor$ is the natural division \lean{t / L}; a condition $\alpha^{-d}\log(\vol(P(0))/\varepsilon)\leq t$ therefore holds for every $t$ when $\vol(P(0))\leq\varepsilon$. Interval integrals \lean{∫ x in a..b} are Bochner integrals, which are $0$ for non-integrable functions. \lean{secantLine} and \lean{zeroLine} are the explicit formulas for $f$ and $g$ from the proofs; for $b=c$ their quotients are $0$ under Mathlib's division by zero, so \lean{secantLine} is the constant \lean{rc} and \lean{zeroLine} is $0$. Functions on intervals, such as $r:[a,c]\to\IR$, are total functions \lean{ℝ → ℝ} with hypotheses on \lean{Set.Icc} only, and measurability of $r$ is Borel measurability. Closed intervals are \lean{Icc a b} with real endpoints, so unbounded closed intervals are not expressible, and \lean{Icc a b} is empty for $a>b$. \lean{C\_dMinusOne} uses \lean{Real.rpow}, \lean{Real.Gamma} and the truncated subtraction \lean{d - 1}, so its values at $0$ and $1$ agree. \lean{symmetricBodyOn m r a b} is $\Sym_{[a,b]}(r)$ for $d=m+1$ as a subset of \lean{ℝ × EuclideanSpace ℝ (Fin m)}, with the axial coordinate first and the product measure as volume, and not as a subset of \lean{V}; the maximum norm of the product does not enter the definition, and no badged statement relates this product space to \lean{V} or to \lean{EuclideanSpace ℝ (Fin (m + 1))}. Its sections are \lean{Metric.closedBall 0 (r ξ)}, a point at radius $0$ and empty at negative radius, so negative values of the real-valued \lean{r} give empty sections.
+
+\subsection{Thickness and projections}\label{app:lean-thickness}
+
+In Definition~\ref{def:thickness}, $\Pi_t$ is the orthogonal projection onto $\dir(X_{M(t)}(t-1))^\perp$ for $M(t)\neq\emptyset$, and $\Delta_\Pi(X)=\max_{x,y\in X}\lVert\Pi(x-y)\rVert$ for a non-empty finite set $X$ and an orthogonal projection~$\Pi$.
+
+\begin{leanlisting}
+\leanfile{DefThickness.lean}
+\begin{leancode}
+def pairDiameter
+    {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (X : Finset V) (hX : X.Nonempty) : ℝ :=
+  (X.product X).sup'
+    (by
+      rcases hX with ⟨x, hx⟩
+      exact ⟨(x, x), by simp [hx]⟩)
+    (fun p => ‖p.1 - p.2‖)
+def thicknessOn
+    {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (P : V →L[ℝ] V)
+    (X : Finset V) (hX : X.Nonempty) : ℝ :=
+  (X.product X).sup'
+    (by
+      rcases hX with ⟨x, hx⟩
+      exact ⟨(x, x), by simp [hx]⟩)
+    (fun p => ‖P (p.1 - p.2)‖)
+\end{leancode}
+\leanfile{LemDeltaContractionCore.lean}
+\begin{leancode}
+abbrev outputSet (E : AveragingExecution (V := V) n) (t : Round) : Finset V :=
+  Finset.univ.image (E.outputs t)
+def thicknessAt
+    (P : V →L[ℝ] V)
+    (E : AveragingExecution (V := V) n)
+    (t : Round) : ℝ :=
+  if hX : (outputSet E t).Nonempty then
+    thicknessOn P (outputSet E t) hX
+  else
+    0
+def diffSubmodule
+    (E : AveragingExecution (V := V) n)
+    (M : Round → Finset (Proc n))
+    (t : Round) : Submodule ℝ V :=
+  Submodule.span ℝ
+    (Set.range (fun p : M (t + 1) × M (t + 1) => E.outputs t p.1.1 - E.outputs t p.2.1))
+def roundProjection
+    (E : AveragingExecution (V := V) n)
+    (M : Round → Finset (Proc n))
+    (t : Round) : V →L[ℝ] V :=
+  (diffSubmodule E M t)ᗮ.starProjection
+\end{leancode}
+\end{leanlisting}
+
+Non-empty finite sets are \lean{Finset V} with a nonemptiness proof \lean{hX}, and the maximum is \lean{Finset.sup'} over \lean{X.product X}. \lean{pairDiameter} and \lean{thicknessOn} are defined on any real normed space, and \lean{thicknessOn} accepts any continuous linear map \lean{P : V →L[ℝ] V}. Orthogonal projections are elements of \lean{V →L[ℝ] V} with the operator norm, not matrices, and statements single out orthogonal projections by Mathlib's \lean{IsStarProjection P}, that is, idempotent and self-adjoint, with the adjoint as star operation. \lean{pairDiameter} is the diameter. The copies \lean{ModelLemmas.pairDiameter} and \lean{ModelLemmas.thicknessOn} in \lean{ModelBridgeCore.lean}, which the lemma statements use, have the same bodies and are proved equal to these by \lean{rfl} in \lean{DefThickness.lean}. \lean{thicknessAt P E t} is $\Delta_P(X(t))$ on the image finset \lean{outputSet E t}, and $0$ if that finset is empty, which happens only for $n=0$; \lean{Finset.image} needs \lean{[DecidableEq V]}, an instance argument whose choice does not change the finset. $\Pi_t$ is not in \lean{DefThickness.lean}. It is \lean{roundProjection E M t} in \lean{LemDeltaContractionCore.lean}, the orthogonal projection onto the complement of the span of the differences of the round-\lean{t} outputs of \lean{M (t + 1)}, hence $\Pi_{t+1}$ in the paper's numbering, and only proofs use it; for empty \lean{M (t + 1)} it is the identity.
+
+\subsection{Relayed averaging}\label{app:lean-relaying}
+
+In Section~\ref{sec:converge_zero_vol}, a relayed averaging algorithm shares a partition of rounds into blocks, forwards origin-labelled block-start values throughout each block, and in the final round of a block averages the distinct received values, its own included, with outputs fixed between updates; it is $\alpha$-safe if every received origin has weight at least $\alpha$ at each update.
+
+\begin{leanlisting}
+\leanfile{VariableRelaying.lean}
+\begin{leancode}
+structure RelayingSchedule where
+  boundary : ℕ → ℕ
+  boundary_zero : boundary 0 = 0
+  strictMono : StrictMono boundary
+\end{leancode}
+\leanfile{PhysicalRelaying.lean}
+\begin{leancode}
+def fixedRelayingSchedule (L : ℕ) (hL : 0 < L) : RelayingSchedule where
+  boundary k := k * L
+  boundary_zero := Nat.zero_mul L
+  strictMono := fun _ _ h => Nat.mul_lt_mul_of_pos_right h hL
+abbrev OriginBuffer (V : Type*) (n : ℕ) := Proc n → Option V
+def singletonBuffer (i : Proc n) (v : V) : OriginBuffer V n := by
+  classical
+  exact fun o => if o = i then some v else none
+def mergeBuffers (b : Proc n → OriginBuffer V n) : OriginBuffer V n := by
+  classical
+  exact fun o => if h : ∃ v, ∃ j, b j o = some v then some h.choose else none
+def receivedBuffers (G : CommGraph n) (b : Proc n → OriginBuffer V n)
+    (i : Proc n) : Proc n → OriginBuffer V n := by
+  classical
+  exact fun j => if G.edge j i then b j else fun _ => none
+def floodBuffer (G : Round → CommGraph n) (start len : ℕ)
+    (x : Proc n → V) (i : Proc n) : OriginBuffer V n := by
+  classical
+  exact fun o => if (graphProduct G start len).edge o i then some (x o) else none
+structure RelayState (V : Type*) (n : ℕ) where
+  value : V
+  buffer : OriginBuffer V n
+open Classical in
+def physicalRelayAlgorithm (B : RelayingSchedule)
+    (update : Round → Proc n → OriginBuffer V n → V) :
+    StatefulAlgorithm V n (RelayState V n) where
+  initialState i v := ⟨v, singletonBuffer i v⟩
+  step t G s i :=
+    let b := mergeBuffers (receivedBuffers G (fun j => (s j).buffer) i)
+    if ∃ k, t = B.boundary (k + 1) then
+      let v := update t i b
+      ⟨v, singletonBuffer i v⟩
+    else ⟨(s i).value, b⟩
+  output _ _ s := s.value
+  output_initial _ _ := rfl
+  locality t G H s z i hG hs := by
+    have hi := hs i (G.self_loop i)
+    have hb : receivedBuffers G (fun j => (s j).buffer) i =
+        receivedBuffers H (fun j => (z j).buffer) i := by
+      funext j
+      by_cases h : G.edge j i
+      · simp [receivedBuffers, h, (hG j).mp h, hs j h]
+      · simp [receivedBuffers, h, show ¬ H.edge j i from fun h' => h ((hG j).mpr h')]
+    simp only [hb, hi]
+\end{leancode}
+\leanfile{PhysicalAveraging.lean}
+\begin{leancode}
+structure LocalAveragingRule (V : Type*) (n : ℕ) where
+  weights : Round → Proc n → OriginBuffer V n → Proc n → ℝ
+  nonneg : ∀ t i b j, 0 ≤ weights t i b j
+  support : ∀ t i b j, b j = none → weights t i b j = 0
+  row_sum : ∀ t i b, (∃ j v, b j = some v) → (∑ j, weights t i b j) = 1
+def update (R : LocalAveragingRule V n) (t : Round) (i : Proc n)
+    (b : OriginBuffer V n) : V := ∑ j, R.weights t i b j • (b j).getD 0
+def macroOutputs (R : LocalAveragingRule V n) (B : RelayingSchedule)
+    (G : Round → CommGraph n) (init : Proc n → V) : ℕ → Proc n → V
+  | 0 => init
+  | k + 1 => fun i => R.update (B.boundary (k + 1)) i
+      (floodBuffer G (B.boundary k) (B.boundary (k + 1) - B.boundary k)
+        (macroOutputs R B G init k) i)
+def macroBuffer (R : LocalAveragingRule V n) (B : RelayingSchedule)
+    (G : Round → CommGraph n) (init : Proc n → V) (t : ℕ) (i : Proc n) : OriginBuffer V n :=
+  floodBuffer G (B.boundary (t - 1)) (B.boundary (t - 1 + 1) - B.boundary (t - 1))
+    (R.macroOutputs B G init (t - 1)) i
+def macroExecution (R : LocalAveragingRule V n) (B : RelayingSchedule)
+    (G : Round → CommGraph n) (init : Proc n → V) : AveragingExecution (V := V) n where
+  graphs t := graphProduct G (B.boundary (t - 1))
+    (B.boundary (t - 1 + 1) - B.boundary (t - 1))
+  weights t i j := R.weights (B.boundary (t - 1 + 1)) i (R.macroBuffer B G init t i) j
+  outputs := R.macroOutputs B G init
+  weights_nonneg _ _ _ := R.nonneg _ _ _ _
+  weights_support t i j h := R.support _ _ _ _ (by simp [macroBuffer, floodBuffer, h])
+  weights_row_sum t i := R.row_sum _ _ _ ⟨i, _, R.macroBuffer_self B G init t i⟩
+  update_rule t i := by
+    simpa only [macroOutputs, macroBuffer, Nat.add_sub_cancel] using
+      R.update_floodBuffer (B.boundary (t + 1)) i G (B.boundary t)
+        (B.boundary (t + 1) - B.boundary t) (R.macroOutputs B G init t)
+def SafeExecution (R : LocalAveragingRule V n) (B : RelayingSchedule)
+    (G : Round → CommGraph n) (init : Proc n → V) (α : ℝ) : Prop :=
+  ∀ k i j v, R.macroBuffer B G init (k + 1) i j = some v →
+    α ≤ R.weights (B.boundary (k + 1)) i (R.macroBuffer B G init (k + 1) i) j
+def SafeForAdversary (R : LocalAveragingRule V n) (B : RelayingSchedule)
+    (N : ObliviousMessageAdversary n) (α : ℝ) : Prop :=
+  ∀ G init, AdmissibleActualTrace N G → R.SafeExecution B G init α
+def physicalAlgorithm (R : LocalAveragingRule V n) (B : RelayingSchedule) :
+    StatefulAlgorithm V n (RelayState V n) := physicalRelayAlgorithm B R.update
+\end{leancode}
+\end{leanlisting}
+
+Blocks come from a \lean{RelayingSchedule}, a strictly increasing \lean{boundary} with \lean{boundary 0 = 0}, and block $k+1$ consists of the rounds \lean{boundary k + 1} to \lean{boundary (k + 1)}. \lean{fixedRelayingSchedule L hL} has \lean{boundary k = k * L}, and the statements take $L$ to be \lean{linearBroadcastRounds n}. The schedule is a parameter of the algorithm, hence known to all processes, and \lean{step} detects block ends from the round number. The algorithm is \lean{physicalAlgorithm R B}, a \lean{StatefulAlgorithm} whose state holds the output \lean{value} and a \lean{buffer} that maps each origin to an \lean{Option V}. A buffer thus holds at most one value per origin, labelled by the origin's index, so received values are distinct by origin and equal values from two origins are two entries. The buffer starts with the process's own input. In each round a process merges the buffers of its incoming neighbors, its own included. At a block end it applies the update to the merged buffer, sets \lean{value} to the result and resets the buffer to that value; in other rounds it keeps \lean{value} and stores the merged buffer. The update therefore includes the messages of the block's last round, and outputs are constant between block ends. With \lean{fixedRelayingSchedule 1} every round ends a block, and \lean{physicalAlgorithm} is an ordinary averaging algorithm whose state also carries a buffer. \lean{mergeBuffers} keeps, for each origin, some received value chosen by \lean{Classical.choose}, unspecified when received buffers disagree; in runs of the algorithm all copies of an origin agree. \lean{floodBuffer G start len x i} contains origin \lean{o}, with value \lean{x o}, exactly when \lean{(graphProduct G start len).edge o i}. A \lean{LocalAveragingRule} weighs origins as a function of the round, the receiver and the whole received buffer, values included, and of no other history; the weights are nonnegative, zero on absent origins and sum to $1$ on nonempty buffers, and \lean{update} replaces absent values by $0$ through \lean{getD 0}. \lean{macroExecution R B G init} is an \lean{AveragingExecution} indexed by blocks: its graph at $t$ is the product over block $t$, its weights at $t$ are the rule's weights on the flooded buffer \lean{macroBuffer} at the end of block $t$, its outputs \lean{macroOutputs} are the outputs after $t$ blocks, and index $0$ repeats block $1$ through the truncated subtraction \lean{t - 1}. The paper's $\alpha$-safety is a hypothesis on the given execution: \lean{AlphaSafeActualRounds (R.macroExecution B G init) α} bounds the weight of every origin present at each block end, \lean{SafeExecution} states the same bound on flooded buffers, and \lean{SafeForAdversary} requires it for every execution admissible for \lean{N}. Buffers that arise in no such execution are unconstrained.
+
+\subsection{Statements built on these definitions}\label{app:lean-statements}
+
+The Lean statements of the following results use these definitions. Theorem~\ref{thm:rooted:to:broadcastable}: \lean{sharpRootedBroadcastBound\_actualRounds} in \leanref{PhysicalRelayRates.lean}, for products of $L$ graphs, and \lean{graphProduct\_broadcastable\_linear\_actualRounds} in \leanref{ActualRounds.lean}, for products of $T$ graphs with $(\pi^2+6)n/6<T+1$. Theorem~\ref{lem:imposs}: \lean{lemma\_imposs\_stateful} in \leanref{StatefulAlgorithms.lean}, with \lean{StatefulSolves}. Lemma~\ref{lem:halfspace:distance:formula}: \leanref{LemHalfspaceDistFormula.lean}. Lemmas~\ref{lem:halfspace:zone}, \ref{lem:contract}, \ref{lem:xi_xip}, \ref{lem:differences}, \ref{lem:Delta-contraction} and Theorem~\ref{thm:poss}: the declarations with suffix \lean{\_actualRounds} in \leanref{ActualRoundLemmas.lean}, for Theorem~\ref{thm:poss} \lean{theorem\_poss\_exact\_actualRounds}. Lemmas~\ref{lem:concave:line} and~\ref{lem:concave:line:zero}: \leanref{LemConcaveLine.lean} and \leanref{LemConcaveLineZero.lean}. Lemma~\ref{lem:volumes}: \lean{lemma\_volumes\_geometric} in \leanref{SymmetricBody.lean} for the bounds and \lean{volume\_real\_symmetricBodyOn} in the same file for the integral identities. Lemma~\ref{lem:convex:zero:hyperplane}: \leanref{ExactHyperplane.lean}. Lemmas~\ref{lem:accumulation_point} and~\ref{lem:continuity}: \leanref{LemAccumulationPoint.lean} and \leanref{LemContinuity.lean}. Theorem~\ref{thm:solving}: \lean{theorem\_solving\_exact\_actualRounds} in \leanref{ActualRounds.lean}. Corollary~\ref{cor:bound}: \lean{theorem\_rooted\_exact\_actualRounds} in \leanref{ActualRounds.lean} for averaging, \lean{physical\_averaging\_solves\_of\_safeForAdversary} in \leanref{PhysicalAveraging.lean} and \lean{physical\_averaging\_linear\_geometric} in \leanref{PhysicalRelayRates.lean} for relayed averaging, with the subsequent deadline in \lean{physical\_averaging\_linear\_deadline}. The characterization corollary: \lean{characterization} in \leanref{PaperComputationalModel.lean}, with \lean{Solves}, and for its second sentence \lean{theorem\_rooted\_exact\_actualRounds} and, for algorithms, \lean{physical\_averaging\_solves\_of\_safeForAdversary} with \lean{fixedRelayingSchedule 1}. Beyond the paper's hypotheses, both statements of Theorem~\ref{thm:rooted:to:broadcastable} assume rootedness of every round $t>0$ of the sequence, including rounds outside the product, and \lean{sharpRootedBroadcastBound\_actualRounds} also assumes $1\leq k$; \lean{volume\_real\_symmetricBodyOn} assumes interval integrability of $r^m$; the statements about volume take the instance arguments \lean{[MeasurableSpace V] [BorelSpace V]}; and \lean{lemma\_Delta\_contraction\_actualRounds} takes \lean{[DecidableEq V]}.
+
+\endgroup

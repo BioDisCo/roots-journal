@@ -1,7 +1,6 @@
-\documentclass[a4paper,11pt]{article}
+\documentclass[preprint,12pt,a4paper]{elsarticle}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{fullpage}
 \usepackage{amsmath,amsthm,amssymb}
 \usepackage{microtype}
 \usepackage[appendix=inline,bibliography=common]{apxproof}
@@ -31,7 +30,8 @@
 \usepackage{xcolor}
 \definecolor{suppcolor}{HTML}{1A6496}
 \newcommand{\suppref}[2]{\href{\suppurl{#1}}{\textcolor{suppcolor}{\textbf{#2}}}}
-\pdfstringdefDisableCommands{\def\leanformalized#1{}}
+\pdfstringdefDisableCommands{\def\leanformalized#1{}\def\corref#1{}}
+\setlength{\emergencystretch}{1.5em}
 
 
 
@@ -138,30 +138,31 @@
 
 
 
-\title{Asymptotic Subspace Consensus in Dynamic Networks}
-
-\author{
-	Matthias Függer\thanks{Université Paris-Saclay, CNRS, ENS Paris-Saclay, LMF,
-		Gif-sur-Yvette, France. \texttt{mfuegger@lmf.cnrs.fr},
-		\url{https://orcid.org/0000-0001-5765-0301}}
-	\and
-	Thomas Nowak\thanks{Université Paris-Saclay, CNRS, ENS Paris-Saclay, LMF,
-		Gif-sur-Yvette, France, and Institut Universitaire de France, Paris, France.
-		\texttt{thomas@thomasnowak.net},
-		\url{https://orcid.org/0000-0003-1690-9342}}
-}
-
-\date{}
+\journal{Theoretical Computer Science}
 
 \begin{document}
 
-\maketitle
+\begin{frontmatter}
 
-\begingroup
-\renewcommand{\thefootnote}{}
-\footnotetext[0]{An earlier version of this paper appeared in the proceedings of
+\title{Asymptotic Subspace Consensus in Dynamic Networks\tnoteref{t1}}
+\tnotetext[t1]{An earlier version of this paper appeared in the proceedings of
 SAND 2026~\cite{fugger_et_al:LIPIcs.SAND.2026.10}.}
-\endgroup
+
+\author[lmf]{Matthias Függer\corref{cor1}}
+\ead{mfuegger@lmf.cnrs.fr}
+
+\author[lmf,iuf]{Thomas Nowak\corref{cor1}}
+\ead{thomas@thomasnowak.net}
+\cortext[cor1]{Corresponding authors.}
+
+\affiliation[lmf]{organization={Université Paris-Saclay, CNRS, ENS Paris-Saclay, LMF},
+	city={Gif-sur-Yvette},
+	postcode={91190},
+	country={France}}
+
+\affiliation[iuf]{organization={Institut Universitaire de France},
+	city={Paris},
+	country={France}}
 
 \begin{abstract}
 	We introduce the problem of asymptotic subspace consensus, which requires the outputs of processes to converge onto a common subspace and onto the convex hull of initial vectors.
@@ -173,11 +174,11 @@ SAND 2026~\cite{fugger_et_al:LIPIcs.SAND.2026.10}.}
 	We also present bounds on the rate at which the volume of the convex hull of process outputs converges to zero.
 \end{abstract}
 
-\paragraph*{Keywords}
-Averaging, dynamic networks, consensus, higher dimensional
+\begin{keyword}
+Averaging \sep dynamic networks \sep consensus \sep higher dimensional
+\end{keyword}
 
-\paragraph*{Supplementary material}
-\url{https://github.com/BioDisCo/roots-journal}
+\end{frontmatter}
 
 
 \section{Introduction}
@@ -702,11 +703,12 @@ We continue with two lemmas on concave functions.
 	\begin{equation}
 		\begin{split}
 			r(b)
-			=
+			 & =
 			r\big((1-\alpha)\xi + \alpha c\big)
 			\geq
 			(1-\alpha)r(\xi) + \alpha r(c)
-			=
+			\\
+			 & =
 			\frac{c-b}{c-\xi}\big(r(\xi) - r(c)\big) + r(c)
 			\enspace,
 		\end{split}
@@ -884,7 +886,8 @@ Crucial in the proof is showing that the function $r$ is concave, so that Lemmas
 	Measurability follows from the measurable-section form of Cavalieri's principle; the compact sections have finite volume.
 	For $x\in I$, the definition gives
 	\begin{align}
-		\vol_{d-1}(H_x \cap P) = \vol_{d-1}(H_x \cap \Sym_I(r)) = \vol_{d-1}(\Ball_x(r(x))) = C_{d-1} \cdot r(x)^{d-1}.\label{eq:volume:ball}
+		\vol_{d-1}(H_x \cap P) = \vol_{d-1}(H_x \cap \Sym_I(r)) & = \vol_{d-1}(\Ball_x(r(x))) \nonumber \\
+		                                                     & = C_{d-1} \cdot r(x)^{d-1}.\label{eq:volume:ball}
 	\end{align}
 	The last equality follows from \eqref{eq:vol:b} with $C_{d-1} = \pi^{(d-1)/2}/\Gamma\left(\frac{d-1}{2}+1\right)$.
 	Outside $I$, both bodies have empty sections and $r(x)=0$.
@@ -928,12 +931,12 @@ Crucial in the proof is showing that the function $r$ is concave, so that Lemmas
 	to the right side yields
 	\begin{align*}
 		\vol_{d-1}\left( H_{tx + (1-t)y} \cap P \right)^{\frac{1}{d-1}}
-		                          & \geq t\vol_{d-1}\left( H_x \cap P \right)^{\frac{1}{d-1}} +
-		(1-t)\vol_{d-1}\left( H_y \cap P \right)^{\frac{1}{d-1}}\enspace.                       \\
+		                          & \geq t\vol_{d-1}\left( H_x \cap P \right)^{\frac{1}{d-1}}                    \\
+		                          & \qquad + (1-t)\vol_{d-1}\left( H_y \cap P \right)^{\frac{1}{d-1}}\enspace.   \\
 		\intertext{By construction of the symmetrization,}
 		\vol_{d-1}\left( H_{tx + (1-t)y} \cap S \right)^{\frac{1}{d-1}}
-		                          & \geq t\vol_{d-1}\left( H_x \cap S \right)^{\frac{1}{d-1}} +
-		(1-t) \vol_{d-1}\left( H_y \cap S \right)^{\frac{1}{d-1}}\enspace.
+		                          & \geq t\vol_{d-1}\left( H_x \cap S \right)^{\frac{1}{d-1}}                    \\
+		                          & \qquad + (1-t) \vol_{d-1}\left( H_y \cap S \right)^{\frac{1}{d-1}}\enspace.
 		\intertext{Combining with \eqref{eq:volume:ball}, one obtains for the radius function $r$:}
 		r\left(tx + (1-t)y\right) & \geq t \cdot r(x) + (1-t) \cdot r(y)
 	\end{align*}
@@ -1143,8 +1146,8 @@ and all node values.
 	If $w_M = 1$, we set $\hat{\xi} = \xi$.
 	Otherwise, we have
 	\begin{align*}
-		\sum_{j \in [n] \setminus M(t)} w_{ij}(t) x_j(t-1) & = (1 - w_M) \sum_{j \in [n] \setminus M(t)} \frac{w_{ij}(t)}{1 - w_M} x_j(t-1)
-		= (1 - w_M) \cdot \hat{\xi}
+		\sum_{j \in [n] \setminus M(t)} w_{ij}(t) x_j(t-1) & = (1 - w_M) \sum_{j \in [n] \setminus M(t)} \frac{w_{ij}(t)}{1 - w_M} x_j(t-1) \\
+		                                                   & = (1 - w_M) \cdot \hat{\xi}
 	\end{align*}
 	for some convex combination $\hat{\xi}$ of points $x_j(t-1)$.
 	From this, we have that
@@ -1616,15 +1619,25 @@ We also hypothesize that variants of the mid-point algorithm that have been show
 In particular we conjecture that analogous to asymptotic consensus in rooted adversaries, the dependency on the dimension~$d$ can be removed.
 
 
-\paragraph*{Funding}
-The work was supported by the French National Research Agency
-(ANR) projects DREAMY (ANR-21-CE48-0003) and COSTXPRESS (ANR-23-CE45-0013), as well as the SAIF project, funded by the ``France 2030'' government investment plan managed by ANR, under the reference ANR-23-PEIA-0006.
-
-\paragraph*{Acknowledgements}
+\section*{Acknowledgements}
 We thank Emmanuel Godard and Eloi Perdereau for introducing us to the question of possible generalizations of the asymptotic consensus problem.
 
+\paragraph*{Funding}
+This work was supported by the French National Research Agency
+(ANR) projects DREAMY (\mbox{ANR-21-CE48-0003}) and COSTXPRESS (\mbox{ANR-23-CE45-0013}), as well as the SAIF project, funded by the ``France 2030'' government investment plan managed by ANR, under the reference \mbox{ANR-23-PEIA-0006}.
 
-\bibliographystyle{plainurl}% the recommended bibstyle
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{Data availability}
+The Lean~4 formalization, the supplementary animations, and the interactive figures are available at \url{https://github.com/BioDisCo/roots-journal}.
+
+\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+During the preparation of this work, the authors used Claude Opus~5 and GPT-6 to generate the Lean~4 formalizations and proofs that accompany the paper as supplementary information.
+After using these tools, the authors reviewed the content as needed and take full responsibility for the content of the publication.
+
+
+\bibliographystyle{elsarticle-num}
 \bibliography{agents}
 
 
